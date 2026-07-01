@@ -1,0 +1,126 @@
+/.phpunit.cache
+
+# ==========================================================
+# DEPENDENCIAS
+# ==========================================================
+/node_modules
+/vendor
+
+# ==========================================================
+# VITE / BUILD LOCAL
+# ==========================================================
+/public/build
+/public/hot
+/public/storage
+
+# ==========================================================
+# STORAGE / LOGS / CACHE
+# ==========================================================
+/storage/*.key
+/storage/pail
+/storage/logs/*.log
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+!/storage/framework/cache/.gitignore
+!/storage/framework/sessions/.gitignore
+!/storage/framework/views/.gitignore
+
+# ==========================================================
+# CACHE LARAVEL
+# ==========================================================
+/bootstrap/cache/*.php
+
+# ==========================================================
+# ENTORNO LOCAL
+# ==========================================================
+.env
+.env.docker
+.env.local
+.env.backup
+.env.production
+
+# SÍ se permiten ejemplos para instalación / Docker
+!.env.example
+!.env.docker.example
+
+# ==========================================================
+# DOCKER
+# ==========================================================
+# NO ignorar Dockerfile, docker-compose.yml, .dockerignore ni .docker/
+# porque el proyecto ahora está dockerizado y eso SÍ debe subirse.
+
+# ==========================================================
+# ARCHIVOS LOCALES / IDE
+# ==========================================================
+.phpactor.json
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/auth.json
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+
+# ==========================================================
+# ARCHIVOS TEMPORALES O RESPALDOS
+# ==========================================================
+*_BACKUP.php
+*_BACKUP.*
+*.tmp
+*.temp
+*_DESACTIVADA.bak
+
+# ==========================================================
+# ARCHIVOS RAROS GENERADOS POR PROBLEMAS DE NOMBRES/CARACTERES
+# ==========================================================
+*#U26a1*
+#U26a1*
+
+# ==========================================================
+# STARTER KIT VIEJO / CÓDIGO BASURA QUE NO DEBE SUBIRSE
+# ==========================================================
+/routes/settings.php
+/resources/views/pages/
+/resources/views/flux/
+/resources/views/profile/
+/resources/views/layouts/auth/
+/resources/views/layouts/auth.blade.php
+/app/Livewire/
+
+# Registro público viejo
+/app/Http/Controllers/Auth/RegisteredUserController.php
+/app/Actions/Fortify/CreateNewUser.php
+/app/Concerns/ProfileValidationRules.php
+/resources/views/auth/register.blade.php
+
+# ==========================================================
+# ARCHIVOS COMPRIMIDOS
+# ==========================================================
+*.zip
+*.rar
+*.7z
+
+# ==========================================================
+# STARTER KIT / CODIGO VIEJO NO USADO
+# ==========================================================
+/app/Http/Controllers/ProfileController.php
+/app/Http/Requests/ProfileUpdateRequest.php
+/resources/views/profile/
+/resources/views/partials/settings-heading.blade.php
+/resources/views/components/app-logo.blade.php
+/resources/views/components/app-logo-icon.blade.php
+/resources/views/components/auth-header.blade.php
+/resources/views/components/desktop-user-menu.blade.php
+/resources/views/components/placeholder-pattern.blade.php
+/resources/views/layouts/app/header.blade.php
+/resources/views/layouts/app/sidebar.blade.php
+
+# Workflows/tests locales no preparados para entrega
+/.github/
+/tests/
