@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Services\ResumenCapacitacionEmpleadoService;
+use App\Models\HistorialCapacitacionEmpleado;
 
 class DashboardController extends Controller
 {
@@ -46,7 +47,7 @@ class DashboardController extends Controller
             }
         }
 
-        $this->sincronizarAsignacionesDashboard($consultaAsignaciones);
+        $this->marcarAsignacionesVencidasDashboard($consultaAsignaciones);
 
         $totalCapacitaciones = (clone $consultaCapacitaciones)->count();
 
@@ -137,14 +138,53 @@ class DashboardController extends Controller
         ));
     }
 
-    private function sincronizarAsignacionesDashboard($consultaAsignaciones): void
+    private function marcarAsignacionesVencidasDashboard($consultaAsignaciones): void
     {
+        $hoy = now()->startOfDay()->format('Ymd H:i:s');
+        $fechaMovimiento = now()->format('Ymd H:i:s');
+
         (clone $consultaAsignaciones)
-            ->whereNotIn('estado', ['cancelada'])
+            ->whereIn('estado', ['pendiente', 'en_proceso'])
+            ->where(function ($query) use ($hoy) {
+                $query->where(function ($subQuery) use ($hoy) {
+                    $subQuery->whereNotNull('fecha_vencimiento')
+                        ->where('fecha_vencimiento', '<', $hoy);
+                })->orWhere(function ($subQuery) use ($hoy) {
+                    $subQuery->whereNull('fecha_vencimiento')
+                        ->whereNotNull('fecha_limite')
+                        ->where('fecha_limite', '<', $hoy);
+                });
+            })
             ->orderBy('id_empleado_capacitacion')
-            ->chunkById(100, function ($asignaciones) {
+            ->chunkById(200, function ($asignaciones) use ($fechaMovimiento) {
+                $ids = [];
+                $historial = [];
+
                 foreach ($asignaciones as $asignacion) {
-                    app(ResumenCapacitacionEmpleadoService::class)->recalcular($asignacion);
+                    $ids[] = $asignacion->id_empleado_capacitacion;
+
+                    $historial[] = [
+                        'id_empleado_capacitacion' => $asignacion->id_empleado_capacitacion,
+                        'estado_anterior' => $asignacion->estado,
+                        'estado_nuevo' => 'vencida',
+                        'observacion' => 'Cambio automático por fecha límite vencida desde dashboard.',
+                        'fecha_movimiento' => $fechaMovimiento,
+                        'id_user' => Auth::check() ? Auth::id() : null,
+                    ];
+                }
+
+                if (!empty($historial)) {
+                    HistorialCapacitacionEmpleado::insert($historial);
+                }
+
+                if (!empty($ids)) {
+                    EmpleadoCapacitacion::whereIn('id_empleado_capacitacion', $ids)
+                        ->update([
+                            'estado' => 'vencida',
+                            'aprobado' => 0,
+                            'fecha_finalizacion' => null,
+                            'updated_at' => $fechaMovimiento,
+                        ]);
                 }
             }, 'id_empleado_capacitacion');
     }

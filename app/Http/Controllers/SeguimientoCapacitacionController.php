@@ -144,28 +144,55 @@ class SeguimientoCapacitacionController extends Controller
         }
     }
 
-    private function marcarAsignacionesSinIngresoVencidasPorFechaLimite(): void
+    private function marcarAsignacionesVencidasSeguimiento(): void
     {
-        $hoy = Carbon::today();
+        $hoy = now()->startOfDay()->format('Ymd H:i:s');
+        $fechaMovimiento = now()->format('Ymd H:i:s');
 
         $this->consultaSeguimientoAutorizada()
             ->whereIn('estado', ['pendiente', 'en_proceso'])
-            ->whereNotNull('fecha_limite')
-            ->whereDate('fecha_limite', '<', $hoy)
-            ->whereNull('fecha_inicio')
-            ->where(function ($query) {
-                $query->whereNull('progreso')
-                    ->orWhere('progreso', '<=', 0);
+            ->where(function ($query) use ($hoy) {
+                $query->where(function ($subQuery) use ($hoy) {
+                    $subQuery->whereNotNull('fecha_vencimiento')
+                        ->where('fecha_vencimiento', '<', $hoy);
+                })->orWhere(function ($subQuery) use ($hoy) {
+                    $subQuery->whereNull('fecha_vencimiento')
+                        ->whereNotNull('fecha_limite')
+                        ->where('fecha_limite', '<', $hoy);
+                });
             })
-            ->doesntHave('modulosAvance')
-            ->doesntHave('intentosEvaluacion')
-            ->doesntHave('intentosEjercicio')
-            ->update([
-                'estado' => 'vencida',
-                'aprobado' => 0,
-                'fecha_finalizacion' => null,
-                'updated_at' => now()->format('Ymd H:i:s'),
-            ]);
+            ->orderBy('id_empleado_capacitacion')
+            ->chunkById(200, function ($asignaciones) use ($fechaMovimiento) {
+                $ids = [];
+                $historial = [];
+
+                foreach ($asignaciones as $asignacion) {
+                    $ids[] = $asignacion->id_empleado_capacitacion;
+
+                    $historial[] = [
+                        'id_empleado_capacitacion' => $asignacion->id_empleado_capacitacion,
+                        'estado_anterior' => $asignacion->estado,
+                        'estado_nuevo' => 'vencida',
+                        'observacion' => 'Cambio automático por fecha límite vencida desde seguimiento.',
+                        'fecha_movimiento' => $fechaMovimiento,
+                        'id_user' => Auth::check() ? Auth::id() : null,
+                    ];
+                }
+
+                if (!empty($historial)) {
+                    HistorialCapacitacionEmpleado::insert($historial);
+                }
+
+                if (!empty($ids)) {
+                    EmpleadoCapacitacion::whereIn('id_empleado_capacitacion', $ids)
+                        ->update([
+                            'estado' => 'vencida',
+                            'aprobado' => 0,
+                            'fecha_finalizacion' => null,
+                            'updated_at' => $fechaMovimiento,
+                        ]);
+                }
+            }, 'id_empleado_capacitacion');
     }
 
     private function sincronizarSeguimientoAutorizado(): void
@@ -292,7 +319,7 @@ class SeguimientoCapacitacionController extends Controller
         $fechaHasta = $request->query('fecha_hasta');
         $vencimiento = $request->query('vencimiento');
 
-        $this->sincronizarSeguimientoAutorizado();
+        $this->marcarAsignacionesVencidasSeguimiento();
 
         $baseQuery = $this->aplicarFiltros($request);
 
