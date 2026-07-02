@@ -40,37 +40,30 @@
                                 </p>
                             </div>
 
-                            <div class="rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 px-4 py-3">
-                                <p class="text-[11px] uppercase tracking-[0.14em] font-black text-blue-500 dark:text-blue-300">
-                                    Total asignadas
-                                </p>
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+                                @if($misCapacitaciones->count() > 0)
+                                    <input type="search"
+                                        id="buscadorMisCapacitaciones"
+                                        autocomplete="off"
+                                        placeholder="Buscar capacitación..."
+                                        class="w-full sm:w-72 rounded-full border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-300 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900/40">
+                                @endif
 
-                                <p class="text-2xl font-black text-slate-900 dark:text-slate-100">
-                                    {{ $misCapacitaciones->count() }}
-                                </p>
+                                <div class="rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 px-4 py-3">
+                                    <p class="text-[11px] uppercase tracking-[0.14em] font-black text-blue-500 dark:text-blue-300">
+                                        Total asignadas
+                                    </p>
+
+                                    <p class="text-2xl font-black text-slate-900 dark:text-slate-100">
+                                        {{ $misCapacitaciones->count() }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="p-4 sm:p-6">
                         @if($misCapacitaciones->count() > 0)
-                            <div class="mb-5 rounded-3xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/60">
-                                <label for="buscadorMisCapacitaciones"
-                                    class="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                                    Buscar capacitación asignada
-                                </label>
-
-                                <input type="search"
-                                    id="buscadorMisCapacitaciones"
-                                    autocomplete="off"
-                                    placeholder="Buscar por nombre, código, estado o fecha..."
-                                    class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-blue-900/40">
-
-                                <p class="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                    Escribe el nombre o código de la capacitación para encontrarla.
-                                </p>
-                            </div>
-
                             <div id="gridMisCapacitaciones" class="esf-training-grid">
                                 @foreach($misCapacitaciones as $item)
                                     @php

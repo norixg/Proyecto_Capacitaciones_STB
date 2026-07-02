@@ -27,6 +27,10 @@ class User extends Authenticatable
     protected $primaryKey = 'id';
     public $timestamps = false; //mientras...
 
+    protected ?Instructor $instructorInternoActualCache = null;
+
+    protected bool $instructorInternoActualConsultado = false;
+
     /**
      * Get the attributes that should be cast.
      *
@@ -126,17 +130,25 @@ class User extends Authenticatable
             ->filter()
             ->values();
 
-        return $this->rolesSistema()
-            ->get()
-            ->contains(function ($rol) use ($roles) {
-                $nombreRol = $rol->rol
-                    ?? $rol->nombre
-                    ?? $rol->nombre_rol
-                    ?? $rol->name
-                    ?? null;
+        if ($roles->isEmpty()) {
+            return false;
+        }
 
-                return $nombreRol && $roles->contains(strtolower(trim((string) $nombreRol)));
-            });
+        $this->loadMissing('rolesSistema');
+
+        if ($this->rolesSistema->isEmpty()) {
+            return false;
+        }
+
+        return $this->rolesSistema->contains(function ($rol) use ($roles) {
+            $nombreRol = $rol->rol
+                ?? $rol->nombre
+                ?? $rol->nombre_rol
+                ?? $rol->name
+                ?? null;
+
+            return $nombreRol && $roles->contains(strtolower(trim((string) $nombreRol)));
+        });
     }
 
     public function tieneRol(string $rol): bool
@@ -156,17 +168,27 @@ class User extends Authenticatable
 
     public function instructorInternoActual(): ?Instructor
     {
+        if ($this->instructorInternoActualConsultado) {
+            return $this->instructorInternoActualCache;
+        }
+
+        $this->instructorInternoActualConsultado = true;
+
         $this->loadMissing('empleadoUser');
 
         $idEmpleado = $this->empleadoUser?->id_empleado;
 
         if (!$idEmpleado) {
+            $this->instructorInternoActualCache = null;
+
             return null;
         }
 
-        return Instructor::where('id_empleado', $idEmpleado)
-            ->where('interno', 1)
-            ->where('estado', 1)
+        $this->instructorInternoActualCache = Instructor::query()
+            ->where('id_empleado', $idEmpleado)
+            ->where('tipo', 'interno')
             ->first();
+
+        return $this->instructorInternoActualCache;
     }
 }

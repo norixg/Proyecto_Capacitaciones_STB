@@ -337,8 +337,6 @@ class MiEvaluacionController extends Controller
 
             app(ResumenCapacitacionEmpleadoService::class)->recalcular($miCapacitacion);
 
-            app(ResumenCapacitacionEmpleadoService::class)->recalcular($miCapacitacion);
-
             $intentosRealizadosDespues = EvaluacionIntento::where('id_evaluacion', $evaluacion->id_evaluacion)
                 ->where('id_empleado_capacitacion', $miCapacitacion->id_empleado_capacitacion)
                 ->count();

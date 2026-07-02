@@ -55,9 +55,16 @@
                             </p>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                            <div class="rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 px-4 py-3">
-                                <p class="text-[11px] uppercase tracking-[0.14em] font-black text-blue-500 dark:text-blue-300">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+                            @if($capacitaciones->count() > 0)
+                                <input type="search"
+                                    id="buscadorCapacitacionesAdmin"
+                                    autocomplete="off"
+                                    placeholder="Buscar capacitación..."
+                                    class="w-full sm:w-56 rounded-full border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-300 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900/40">
+                            @endif
+                            <div class="rounded-2xl sm:items-center sm:justify-end bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 px-4 py-3">
+                                <p class="text-[11px] uppercase tracking-[0.11em] font-black text-blue-500 dark:text-blue-300">
                                     Total visible
                                 </p>
 
@@ -69,18 +76,18 @@
                             @if($modoArchivadas)
                                 <a href="{{ route('capacitaciones.index') }}"
                                 class="esf-btn esf-btn-soft">
-                                    Volver al catálogo
+                                    Volver
                                 </a>
                             @else
                                 @if($esAdminCapacitaciones)
                                     <a href="{{ route('capacitaciones.archivadas') }}"
-                                    class="esf-btn esf-btn-soft">
+                                    class="esf-btn esf-btn-soft inline-flex items-center justify-center text-center leading-tight whitespace-nowrap">
                                         Ver archivadas
                                     </a>
                                 @endif
 
                                 <a href="{{ route('capacitaciones.create') }}"
-                                class="esf-btn esf-btn-primary">
+                                class="esf-btn esf-btn-primary inline-flex items-center justify-center text-center leading-tight whitespace-nowrap">
                                     + Nueva capacitación
                                 </a>
                             @endif
@@ -90,19 +97,6 @@
 
                 <div class="p-4 sm:p-6">
                     @if($capacitaciones->count() > 0)
-                        <div class="mb-5 rounded-3xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/60">
-                            <label for="buscadorCapacitacionesAdmin"
-                                class="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                                Buscar capacitación
-                            </label>
-
-                            <input type="search"
-                                id="buscadorCapacitacionesAdmin"
-                                autocomplete="off"
-                                placeholder="Buscar por nombre, código, instructor o estado..."
-                                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-blue-900/40">
-                        </div>
-
                         <div id="gridCapacitacionesAdmin" class="esf-training-grid">
                             @foreach($capacitaciones as $capacitacion)
                                @php

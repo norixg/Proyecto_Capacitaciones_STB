@@ -47,8 +47,12 @@
                             </p>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+                            <input type="search"
+                                id="buscadorUsuariosSistema"
+                                autocomplete="off"
+                                placeholder="Buscar usuario..."
+                                class="w-full sm:w-72 rounded-full border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-300 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900/40">
 
                             <a href="{{ route('usuarios.create') }}"
                                class="esf-btn esf-btn-primary">
@@ -59,23 +63,6 @@
                 </div>
 
                 <div class="p-4 sm:p-6">
-                    <div class="mb-5 rounded-3xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/60">
-                        <label for="buscadorUsuariosSistema"
-                            class="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                            Buscar usuario
-                        </label>
-
-                        <input type="search"
-                            id="buscadorUsuariosSistema"
-                            autocomplete="off"
-                            placeholder="Buscar por nombre, correo, rol, empleado vinculado o estado..."
-                            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-blue-900/40">
-
-                        <p class="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                            Busca entre usuarios activos, inactivos, administradores, instructores y usuarios normales.
-                        </p>
-                    </div>
-
                     <div class="esf-table-wrap">
                         <table class="esf-table">
                             <thead>

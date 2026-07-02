@@ -1174,6 +1174,73 @@ GO
 CREATE INDEX [IX_aviso_correo_id_configuracion_aviso] ON [dbo].[aviso_correo]([id_configuracion_aviso])
 GO
 
+CREATE INDEX [IX_aviso_correo_id_configuracion_aviso] ON [dbo].[aviso_correo]([id_configuracion_aviso])
+GO
+
+/* ============================================================
+   INDICES DE OPTIMIZACION - NAVEGACION, SEGUIMIENTO Y DASHBOARD
+   ============================================================ */
+CREATE INDEX [IX_ec_capacitacion_estado_empleado]
+ON [dbo].[empleado_capacitacion]([id_capacitacion], [estado], [id_empleado])
+INCLUDE ([progreso], [nota_final], [aprobado], [fecha_inicio], [fecha_finalizacion], [fecha_limite], [fecha_vencimiento])
+GO
+
+CREATE INDEX [IX_ec_empleado_estado_fechas]
+ON [dbo].[empleado_capacitacion]([id_empleado], [estado], [fecha_vencimiento], [fecha_limite])
+INCLUDE ([id_capacitacion], [progreso], [nota_final], [aprobado], [fecha_inicio], [fecha_finalizacion])
+GO
+
+CREATE INDEX [IX_eca_busqueda_contenido]
+ON [dbo].[empleado_contenido_avance](
+    [id_empleado_capacitacion],
+    [id_capacitacion_modulo],
+    [tipo_contenido],
+    [id_capacitacion_modulo_seccion],
+    [id_capacitacion_recurso],
+    [id_ejercicio],
+    [id_evaluacion]
+)
+INCLUDE ([estado], [fecha_inicio], [fecha_ultima_actividad], [fecha_completado])
+GO
+
+CREATE INDEX [IX_eval_intento_cap_eval_numero]
+ON [dbo].[evaluacion_intento]([id_empleado_capacitacion], [id_evaluacion], [numero_intento] DESC)
+INCLUDE ([id_empleado], [aprobado], [estado], [fecha_inicio], [fecha_fin], [nota])
+GO
+
+CREATE INDEX [IX_ejer_intento_cap_ejer_numero]
+ON [dbo].[ejercicio_intento]([id_empleado_capacitacion], [id_ejercicio], [numero_intento] DESC)
+INCLUDE ([id_empleado], [aprobado], [estado], [fecha_inicio], [fecha_fin], [porcentaje_obtenido], [puntaje_obtenido])
+GO
+
+CREATE INDEX [IX_historial_capacitacion_fecha]
+ON [dbo].[historial_capacitacion_empleado]([id_empleado_capacitacion], [fecha_movimiento] DESC)
+INCLUDE ([estado_anterior], [estado_nuevo], [id_user])
+GO
+
+CREATE INDEX [IX_recurso_modulo_estado_orden]
+ON [dbo].[capacitacion_recurso]([id_capacitacion_modulo], [estado], [orden], [id_capacitacion_recurso])
+INCLUDE ([id_capacitacion_modulo_seccion], [titulo], [tipo_recurso])
+GO
+
+CREATE INDEX [IX_ejercicio_modulo_estado_orden]
+ON [dbo].[ejercicio]([id_capacitacion_modulo], [estado], [orden], [id_ejercicio])
+INCLUDE ([id_capacitacion_modulo_seccion], [titulo], [obligatorio], [intentos_maximos], [porcentaje_aprobacion])
+GO
+
+CREATE INDEX [IX_evaluacion_modulo_activa_orden]
+ON [dbo].[evaluacion]([id_capacitacion_modulo], [activa], [orden], [id_evaluacion])
+INCLUDE ([id_capacitacion_modulo_seccion], [titulo], [intentos_maximos], [porcentaje_aprobacion])
+GO
+
+CREATE INDEX [IX_user_rol_user_rol]
+ON [dbo].[user_rol]([id_user], [id_rol])
+GO
+
+/* ============================================================
+   DATOS BASE
+   ============================================================ */
+
 /* ============================================================
    DATOS BASE
    ============================================================ */

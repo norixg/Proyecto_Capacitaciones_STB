@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Schema;
 
 class AvanceModuloContenidoService
 {
+
+    private static ?bool $existeTablaContenidoAvance = null;
+
     public function sincronizar(
         EmpleadoCapacitacion $miCapacitacion,
         int|CapacitacionModulo $modulo,
@@ -168,7 +171,7 @@ class AvanceModuloContenidoService
     ): int {
         $ids = collect($ids)->filter()->unique()->values();
 
-        if ($ids->isEmpty() || !Schema::hasTable('empleado_contenido_avance')) {
+        if ($ids->isEmpty() || !$this->existeTablaContenidoAvance()) {
             return 0;
         }
 
@@ -304,5 +307,14 @@ class AvanceModuloContenidoService
             'completadas' => $completadas,
             'reprobada_por_intentos' => $reprobadaPorIntentos,
         ];
+    }
+
+    private function existeTablaContenidoAvance(): bool
+    {
+        if (self::$existeTablaContenidoAvance === null) {
+            self::$existeTablaContenidoAvance = Schema::hasTable('empleado_contenido_avance');
+        }
+
+        return self::$existeTablaContenidoAvance;
     }
 }

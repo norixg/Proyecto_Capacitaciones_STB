@@ -13,7 +13,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use App\Services\ResumenCapacitacionEmpleadoService;
+use App\Models\HistorialCapacitacionEmpleado;
+use Illuminate\Support\Facades\Auth;
 
 class ReporteController extends Controller
 {
@@ -170,11 +171,46 @@ class ReporteController extends Controller
 
     private function sincronizarAsignacionesParaReportes(): void
     {
-        EmpleadoCapacitacion::whereNotIn('estado', ['cancelada'])
+        $ahora = now();
+
+        EmpleadoCapacitacion::query()
+            ->select('id_empleado_capacitacion')
+            ->whereIn('estado', ['pendiente', 'en_proceso'])
+            ->where(function ($query) use ($ahora) {
+                $query->where(function ($subQuery) use ($ahora) {
+                    $subQuery->whereNotNull('fecha_vencimiento')
+                        ->where('fecha_vencimiento', '<', $ahora);
+                })->orWhere(function ($subQuery) use ($ahora) {
+                    $subQuery->whereNull('fecha_vencimiento')
+                        ->whereNotNull('fecha_limite')
+                        ->where('fecha_limite', '<', $ahora);
+                });
+            })
             ->orderBy('id_empleado_capacitacion')
-            ->chunkById(100, function ($asignaciones) {
-                foreach ($asignaciones as $asignacion) {
-                    app(ResumenCapacitacionEmpleadoService::class)->recalcular($asignacion);
+            ->chunkById(200, function ($asignaciones) use ($ahora) {
+                $ids = $asignaciones->pluck('id_empleado_capacitacion')->all();
+
+                if (empty($ids)) {
+                    return;
+                }
+
+                EmpleadoCapacitacion::query()
+                    ->whereIn('id_empleado_capacitacion', $ids)
+                    ->update([
+                        'estado' => 'vencida',
+                        'updated_at' => $ahora,
+                    ]);
+
+                foreach ($ids as $idEmpleadoCapacitacion) {
+                    HistorialCapacitacionEmpleado::query()->firstOrCreate([
+                        'id_empleado_capacitacion' => $idEmpleadoCapacitacion,
+                        'accion' => 'vencida',
+                    ], [
+                        'descripcion' => 'La capacitación fue marcada como vencida automáticamente al consultar los reportes.',
+                        'realizado_por' => Auth::id(),
+                        'created_at' => $ahora,
+                        'updated_at' => $ahora,
+                    ]);
                 }
             }, 'id_empleado_capacitacion');
     }

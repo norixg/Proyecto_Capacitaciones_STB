@@ -47,8 +47,12 @@
                             </p>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+                            <input type="search"
+                                id="buscadorInstructoresSistema"
+                                autocomplete="off"
+                                placeholder="Buscar instructor..."
+                                class="w-full sm:w-72 rounded-full border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-300 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900/40">
 
                             <a href="{{ route('instructores.create') }}"
                                class="esf-btn esf-btn-primary">
@@ -62,7 +66,7 @@
                     <div class="esf-table-wrap">
                         <table class="esf-table">
                             <thead>
-                                <tr>
+                                <tr data-instructor-sistema-row>
                                     <th>ID</th>
                                     <th>Instructor</th>
                                     <th>Correo</th>
@@ -86,7 +90,7 @@
                                         $tipoInstructor = (int) $instructor->interno === 1 ? 'Interno' : 'Externo';
                                     @endphp
 
-                                    <tr>
+                                    <tr data-instructor-sistema-row>
                                         <td>
                                             <span class="font-black text-slate-700 dark:text-slate-200">
                                                 {{ $instructor->id_instructor }}
@@ -169,7 +173,7 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
+                                    <tr data-instructor-sistema-row>
                                         <td colspan="8">
                                             <div class="py-10 text-center">
                                                 <p class="text-lg font-black text-slate-800 dark:text-slate-100">
@@ -195,4 +199,36 @@
 
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const buscador = document.getElementById('buscadorInstructoresSistema');
+            const filas = document.querySelectorAll('[data-instructor-sistema-row]');
+
+            if (!buscador || filas.length === 0) {
+                return;
+            }
+
+            function normalizarTexto(texto) {
+                return (texto || '')
+                    .toString()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .trim();
+            }
+
+            function filtrarInstructores() {
+                const valor = normalizarTexto(buscador.value);
+
+                filas.forEach(function (fila) {
+                    const textoFila = normalizarTexto(fila.innerText);
+                    fila.style.display = textoFila.includes(valor) ? '' : 'none';
+                });
+            }
+
+            buscador.addEventListener('input', filtrarInstructores);
+        });
+    </script>
+
 </x-app-layout>

@@ -53,7 +53,7 @@ class DashboardController extends Controller
 
         $totalUsuarios = $esAdminDashboard
             ? User::count()
-            : (clone $consultaAsignaciones)->pluck('id_empleado')->unique()->count();
+            : (clone $consultaAsignaciones)->distinct()->count('id_empleado');
 
         $totalUsuariosActivos = $esAdminDashboard ? User::where('estado', 1)->count() : $totalUsuarios;
         $totalUsuariosInactivos = $esAdminDashboard ? User::where('estado', 0)->count() : 0;

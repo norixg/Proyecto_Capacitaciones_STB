@@ -16,6 +16,11 @@ use App\Services\AvanceModuloContenidoService;
 
 class MiModuloController extends Controller
 {
+
+    private static ?bool $existeTablaContenidoAvance = null;
+
+    private static ?bool $existeTablaRecursoAvance = null;
+
     public function show($id_empleado_capacitacion, $id_capacitacion_modulo)
     {
         $usuario = Auth::user();
@@ -107,7 +112,7 @@ class MiModuloController extends Controller
 
         $avancesContenidoUsuario = collect();
 
-        if (Schema::hasTable('empleado_contenido_avance')) {
+        if ($this->existeTablaContenidoAvance()) {
             $avancesContenidoUsuario = DB::table('empleado_contenido_avance')
                 ->where('id_empleado_capacitacion', $miCapacitacion->id_empleado_capacitacion)
                 ->where('id_capacitacion_modulo', $modulo->id_capacitacion_modulo)
@@ -127,7 +132,7 @@ class MiModuloController extends Controller
 
         $recursosAbiertosIds = [];
 
-        if (Schema::hasTable('empleado_recurso_avance')) {
+        if ($this->existeTablaRecursoAvance()) {
             $recursosAbiertosIds = DB::table('empleado_recurso_avance')
                 ->where('id_empleado_capacitacion', $miCapacitacion->id_empleado_capacitacion)
                 ->pluck('id_capacitacion_recurso')
@@ -343,6 +348,24 @@ class MiModuloController extends Controller
         ));
     }
 
+    private function existeTablaContenidoAvance(): bool
+    {
+        if (self::$existeTablaContenidoAvance === null) {
+            self::$existeTablaContenidoAvance = Schema::hasTable('empleado_contenido_avance');
+        }
+
+        return self::$existeTablaContenidoAvance;
+    }
+
+    private function existeTablaRecursoAvance(): bool
+    {
+        if (self::$existeTablaRecursoAvance === null) {
+            self::$existeTablaRecursoAvance = Schema::hasTable('empleado_recurso_avance');
+        }
+
+        return self::$existeTablaRecursoAvance;
+    }
+
     public function registrarAvanceContenido(Request $request, $id_empleado_capacitacion, $id_capacitacion_modulo)
     {
         $usuario = Auth::user();
@@ -426,7 +449,7 @@ class MiModuloController extends Controller
             $tituloContenido = $contenido->titulo;
         }
 
-        if (!Schema::hasTable('empleado_contenido_avance')) {
+        if (!$this->existeTablaContenidoAvance()) {
             return response()->json(['ok' => true]);
         }
 
@@ -454,6 +477,21 @@ class MiModuloController extends Controller
                 'created_at' => $yaExistia ? DB::raw('created_at') : $fechaActual,
             ]
         );
+
+        if ($yaExistia) {
+            $avanceModuloActual = EmpleadoModuloAvance::query()
+                ->where('id_empleado_capacitacion', $miCapacitacion->id_empleado_capacitacion)
+                ->where('id_capacitacion_modulo', $modulo->id_capacitacion_modulo)
+                ->first();
+
+            return response()->json([
+                'ok' => true,
+                'ya_existia' => true,
+                'progreso_modulo' => (float) ($avanceModuloActual?->porcentaje_avance ?? 0),
+                'progreso_capacitacion' => (float) ($miCapacitacion->progreso ?? 0),
+                'estado_capacitacion' => $miCapacitacion->estado,
+            ]);
+        }
 
         if (!$yaExistia) {
             DB::table('historial_capacitacion_empleado')->insert([
@@ -488,7 +526,7 @@ class MiModuloController extends Controller
         CapacitacionModulo $modulo,
         ?EmpleadoModuloAvance $avanceModulo = null
     ): ?EmpleadoModuloAvance {
-        if (!Schema::hasTable('empleado_contenido_avance')) {
+        if (!$this->existeTablaContenidoAvance()) {
             return $avanceModulo;
         }
 

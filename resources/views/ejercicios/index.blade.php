@@ -1180,7 +1180,6 @@
                                     </div>
                                 </div>
                             </div>
-                            </div>
 
                             <div>
                                 <label class="block text-sm font-medium">Orden</label>
@@ -1194,7 +1193,7 @@
                                     <option value="0" {{ old('activa', $pregunta->activa) == 0 ? 'selected' : '' }}>No</option>
                                 </select>
                             </div>
-<input type="hidden" name="requiere_revision_manual" value="{{ in_array($pregunta->tipo_pregunta, ['respuesta_corta', 'caso_practico', 'actividad_visual_identificacion'], true) ? 1 : 0 }}">
+                            <input type="hidden" name="requiere_revision_manual" value="{{ in_array($pregunta->tipo_pregunta, ['respuesta_corta', 'caso_practico', 'actividad_visual_identificacion'], true) ? 1 : 0 }}">
 
 
                             <div class="md:col-span-2 bloque-opciones-edicion-ejercicio"
