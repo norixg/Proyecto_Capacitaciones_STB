@@ -267,11 +267,11 @@ Con la configuración recomendada `QUEUE_CONNECTION=sync`, el listener de cola n
 
 La imagen incluida compila los recursos con Node 22 y sirve Laravel mediante Apache/PHP 8.4. Compose levanta tres servicios:
 
-- `sqlserver`: SQL Server 2022 con almacenamiento persistente.
+- `sqlserver`: SQL Server 2022 con almacenamiento persistente, accesible solo dentro de la red de Compose.
 - `sqlserver_init`: tarea de una sola ejecución que importa `capacitaciones_stb.sql` cuando el esquema aún no existe y después termina.
 - `capacitaciones_app`: aplicación Laravel, iniciada después de que la base esté saludable e inicializada.
 
-No necesita instalar PHP, Composer, Node ni SQL Server en el host.
+El SQL Server del proyecto no publica el puerto `1433` en el host, por lo que no entra en conflicto con otras instancias de SQL Server que ya estén ejecutándose en Docker.
 
 ### 1. Construir y levantar
 
@@ -301,13 +301,7 @@ En ese caso la aplicación estará en `http://localhost:8081`. Debe usar el mism
 APP_PORT=8081 docker compose up -d
 ```
 
-Si el puerto 1433 está ocupado:
-
-```bash
-DB_EXPOSED_PORT=1434 docker compose up -d --build
-```
-
-El cambio del puerto publicado de SQL Server no afecta la conexión interna de Laravel.
+SQL Server no se publica hacia el host. Laravel se conecta internamente a `sqlserver:1433`; para administrar esta base desde el host puede publicar manualmente un puerto libre si realmente lo necesita.
 
 ### 2. Crear el primer administrador
 
@@ -346,46 +340,7 @@ Ejecute este procedimiento solo una vez. Cambie la contraseña antes de utilizar
 
 ### Persistencia e inicialización
 
-Los datos viven en el volumen `sqlserver_data`. En arranques posteriores, el inicializador comprueba tablas, roles y permisos y omite el SQL para no destruir información existente.
-
-`sqlserver_init` **no es un servidor permanente**. Docker Desktop lo mostrará detenido y con un botón de reproducción después de finalizar. El estado correcto es `Exited (0)`:
-
-```text
-capacitaciones_app   Up
-sqlserver            Up (healthy)
-sqlserver_init       Exited (0)
-```
-
-Esto no representa un error. `Exited (0)` significa que la importación o verificación terminó correctamente. No es necesario iniciar manualmente ese contenedor; si se vuelve a ejecutar, comprobará la base y terminará otra vez. Un fallo real se muestra como `Exited (1)` y evita que Laravel arranque.
-
-Compruebe el resultado con:
-
-```bash
-docker compose ps -a
-docker compose logs sqlserver_init
-```
-
-En la primera ejecución, el log debe incluir:
-
-```text
-Base de datos inicializada correctamente.
-Inicialización de SQL Server completada.
-```
-
-En ejecuciones posteriores debe indicar:
-
-```text
-La base de datos ya está inicializada; no se volverá a ejecutar el script destructivo.
-```
-
-Para reiniciar completamente la base de datos durante desarrollo:
-
-```bash
-docker compose down -v
-docker compose up -d --build
-```
-
-> `docker compose down -v` elimina permanentemente la base de datos del volumen. No lo use si necesita conservar sus datos.
+Los datos viven en el volumen `sqlserver_data`. En arranques posteriores, el inicializador comprueba el esquema y omite el SQL destructivo si la base ya está preparada. El servicio `sqlserver_init` debe terminar con estado `Exited (0)`; esto es normal porque es una tarea de inicialización, no un servidor permanente.
 
 ### Comandos Docker frecuentes
 
@@ -514,31 +469,13 @@ En producción se recomienda cifrado y un certificado válido.
 
 - Revise `docker compose logs sqlserver` y `docker compose logs sqlserver_init`.
 - Asigne suficiente memoria a Docker Desktop.
-- Si 1433 está ocupado, levante con `DB_EXPOSED_PORT=1434`.
+- El servicio no publica `1433` en el host; un SQL Server existente puede seguir utilizando ese puerto sin conflicto.
 - En Apple Silicon, mantenga `platform: linux/amd64` y habilite la emulación de Docker Desktop.
 - Si la inicialización quedó incompleta y no hay datos que conservar, ejecute `docker compose down -v` y vuelva a levantar.
 
 ### `sqlserver_init` aparece detenido en Docker Desktop
 
-Es el comportamiento esperado si `docker compose ps -a` muestra `Exited (0)`. Es una tarea de inicialización, no un servicio que deba permanecer ejecutándose.
-
-Confirme que la base quedó cargada:
-
-```bash
-docker compose exec -T sqlserver /opt/mssql-tools18/bin/sqlcmd \
-  -S localhost \
-  -U usuario_laravel \
-  -P 'StbLaravel_2026!' \
-  -C \
-  -d db_capacitaciones_stb \
-  -Q "SET NOCOUNT ON; SELECT COUNT(*) AS tablas FROM sys.tables; SELECT COUNT(*) AS roles FROM dbo.rol; SELECT COUNT(*) AS permisos FROM dbo.permissions;"
-```
-
-Una instalación correcta devuelve 38 tablas, 3 roles y 50 permisos. Si muestra `Exited (1)`, consulte el error con:
-
-```bash
-docker compose logs --tail=200 sqlserver_init
-```
+Es el comportamiento esperado si `docker compose ps -a` muestra `Exited (0)`. Es una tarea de inicialización y no debe permanecer ejecutándose. Si muestra `Exited (1)`, revise `docker compose logs sqlserver_init`.
 
 ### La aplicación no abre en el navegador
 
