@@ -1,26 +1,32 @@
 USE [master]
 GO
 
-
-CREATE LOGIN usuario_laravel WITH PASSWORD = 'usuario_laravel*';
-GO
-
-USE [db_capacitaciones_stb];
-GO
-
-CREATE USER usuario_laravel FOR LOGIN usuario_laravel;
-GO
-
-ALTER ROLE db_owner ADD MEMBER usuario_laravel;
-
-
 IF DB_ID(N'db_capacitaciones_stb') IS NULL
 BEGIN
     CREATE DATABASE [db_capacitaciones_stb]
 END
 GO
 
+IF SUSER_ID(N'usuario_laravel') IS NULL
+BEGIN
+    CREATE LOGIN [usuario_laravel] WITH PASSWORD = 'StbLaravel_2026!';
+END
+ELSE
+BEGIN
+    ALTER LOGIN [usuario_laravel] WITH PASSWORD = 'StbLaravel_2026!';
+END
+GO
+
 USE [db_capacitaciones_stb]
+GO
+
+IF USER_ID(N'usuario_laravel') IS NULL
+BEGIN
+    CREATE USER [usuario_laravel] FOR LOGIN [usuario_laravel];
+END
+GO
+
+ALTER ROLE [db_owner] ADD MEMBER [usuario_laravel];
 GO
 
 /* ============================================================
@@ -526,6 +532,7 @@ GO
 CREATE TABLE dbo.ejercicio (
     id_ejercicio INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     id_capacitacion_modulo INT NOT NULL,
+    id_capacitacion_modulo_seccion INT NULL,
     titulo NVARCHAR(250) NOT NULL,
     descripcion NVARCHAR(1000) NULL,
     instrucciones NVARCHAR(MAX) NULL,
@@ -1171,9 +1178,6 @@ CREATE INDEX [IX_evaluacion_intento_id_empleado] ON [dbo].[evaluacion_intento]([
 GO
 CREATE INDEX [IX_aviso_correo_estado_fecha_programada] ON [dbo].[aviso_correo]([estado], [fecha_programada])
 GO
-CREATE INDEX [IX_aviso_correo_id_configuracion_aviso] ON [dbo].[aviso_correo]([id_configuracion_aviso])
-GO
-
 CREATE INDEX [IX_aviso_correo_id_configuracion_aviso] ON [dbo].[aviso_correo]([id_configuracion_aviso])
 GO
 

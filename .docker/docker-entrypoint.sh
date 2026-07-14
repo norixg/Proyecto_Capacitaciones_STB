@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 set -e
 
+# En desarrollo Docker se conserva una clave generada dentro de storage para
+# que una instalación nueva funcione sin requerir un .env local.
+if [ -z "${APP_KEY:-}" ]; then
+    APP_KEY_FILE="storage/.docker_app_key"
+
+    if [ ! -s "$APP_KEY_FILE" ]; then
+        php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;" > "$APP_KEY_FILE"
+    fi
+
+    export APP_KEY="$(cat "$APP_KEY_FILE")"
+fi
+
 mkdir -p storage/framework/cache/data
 mkdir -p storage/framework/sessions
 mkdir -p storage/framework/views

@@ -65,6 +65,16 @@ RUN set -eux; \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Instalar dependencias antes de copiar el código permite reutilizar la capa
+# mientras composer.lock no cambie y acelera considerablemente los rebuilds.
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --optimize-autoloader \
+    --no-interaction \
+    --prefer-dist
+
 COPY . .
 
 COPY --from=node_builder /app/public/build ./public/build
@@ -74,7 +84,7 @@ COPY .docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 
 RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint; \
     chmod +x /usr/local/bin/docker-entrypoint; \
-    composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist; \
+    composer dump-autoload --no-dev --optimize --no-interaction; \
     mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache; \
     chown -R www-data:www-data storage bootstrap/cache; \
     chmod -R ug+rwX storage bootstrap/cache

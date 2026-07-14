@@ -1,18 +1,83 @@
 services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-StbDocker_SA2026!}"
+    ports:
+      - "${DB_EXPOSED_PORT:-1433}:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  sqlserver_init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    restart: "no"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-StbDocker_SA2026!}"
+    volumes:
+      - ./capacitaciones_stb.sql:/docker-entrypoint-initdb.d/capacitaciones_stb.sql:ro
+      - ./.docker/init-sqlserver.sh:/usr/local/bin/init-sqlserver:ro
+    entrypoint: ["/bin/bash", "/usr/local/bin/init-sqlserver"]
+
   capacitaciones_app:
     build:
       context: .
       dockerfile: Dockerfile
     image: proyecto_capacitaciones_laravel13:local
-    container_name: capacitaciones_laravel13
     restart: unless-stopped
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      sqlserver_init:
+        condition: service_completed_successfully
     ports:
-      - "8080:80"
-    env_file:
-      - .env.docker
+      - "${APP_PORT:-8080}:80"
+    environment:
+      APP_NAME: "Capacitaciones STB"
+      APP_ENV: local
+      APP_KEY: "${APP_KEY:-}"
+      APP_DEBUG: "true"
+      APP_URL: "http://localhost:${APP_PORT:-8080}"
+      APP_LOCALE: es
+      APP_FALLBACK_LOCALE: es
+      LOG_CHANNEL: stack
+      LOG_LEVEL: debug
+      DB_CONNECTION: sqlsrv
+      DB_HOST: sqlserver
+      DB_PORT: 1433
+      DB_DATABASE: db_capacitaciones_stb
+      DB_USERNAME: usuario_laravel
+      DB_PASSWORD: "StbLaravel_2026!"
+      DB_ENCRYPT: "no"
+      DB_TRUST_SERVER_CERTIFICATE: "true"
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      QUEUE_CONNECTION: sync
+      FILESYSTEM_DISK: local
+      MAIL_MAILER: log
+      MAIL_FROM_ADDRESS: capacitaciones@stb.local
+      MAIL_FROM_NAME: "Capacitaciones STB"
     volumes:
       - ./storage/app/public:/var/www/html/storage/app/public
       - ./storage/logs:/var/www/html/storage/logs
       - ./storage/framework/sessions:/var/www/html/storage/framework/sessions
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+volumes:
+  sqlserver_data:
