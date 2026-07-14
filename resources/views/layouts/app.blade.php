@@ -193,6 +193,7 @@
                 ></div>
 
                 <aside
+                    id="menu-lateral-usuario"
                     x-show="menuUsuarioAbierto"
                     x-transition:enter="transition ease-out duration-200"
                     x-transition:enter-start="-translate-x-full"
@@ -266,9 +267,11 @@
                             <div class="flex items-center gap-4">
                                 <button
                                     type="button"
-                                    @click="menuUsuarioAbierto = true"
+                                    @click="menuUsuarioAbierto = !menuUsuarioAbierto"
                                     class="esf-icon-button"
-                                    title="Abrir menú"
+                                    :title="menuUsuarioAbierto ? 'Cerrar menú' : 'Abrir menú'"
+                                    :aria-expanded="menuUsuarioAbierto"
+                                    aria-controls="menu-lateral-usuario"
                                 >
                                     <span class="text-xl leading-none">☰</span>
                                 </button>
@@ -382,6 +385,7 @@
 
                {{-- MENÚ LATERAL ADMIN --}}
                 <aside
+                    id="menu-lateral-admin"
                     x-show="menuAdminAbierto"
                     x-transition:enter="transition ease-out duration-200"
                     x-transition:enter-start="-translate-x-full"
@@ -533,9 +537,11 @@
                             <div class="flex items-center gap-4">
                                 <button
                                     type="button"
-                                    @click="menuAdminAbierto = true"
+                                    @click="menuAdminAbierto = !menuAdminAbierto"
                                     class="esf-icon-button"
-                                    title="Abrir menú"
+                                    :title="menuAdminAbierto ? 'Cerrar menú' : 'Abrir menú'"
+                                    :aria-expanded="menuAdminAbierto"
+                                    aria-controls="menu-lateral-admin"
                                 >
                                     <span class="text-xl leading-none">☰</span>
                                 </button>
