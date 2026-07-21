@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <script>
+        <script nonce="{{ request()->attributes->get('csp_nonce') }}">
             (function () {
                 const temaGuardado = localStorage.getItem('tema-sistema-capacitacion');
                 const prefiereOscuro = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -668,7 +668,7 @@
             </div>
         @endif
 
-        <script>
+        <script nonce="{{ request()->attributes->get('csp_nonce') }}">
             document.addEventListener('DOMContentLoaded', function () {
                 const erroresSistema = @json($errors->getMessages());
                 const oldSistema = @json(session()->getOldInput());
@@ -923,7 +923,7 @@
             });
         </script>
 
-                   <script>
+                   <script nonce="{{ request()->attributes->get('csp_nonce') }}">
             (function () {
                 const rutasPermitidas = [
                     '/seguimiento-capacitaciones',

@@ -7,26 +7,7 @@ BEGIN
 END
 GO
 
-IF SUSER_ID(N'usuario_laravel') IS NULL
-BEGIN
-    CREATE LOGIN [usuario_laravel] WITH PASSWORD = 'StbLaravel_2026!';
-END
-ELSE
-BEGIN
-    ALTER LOGIN [usuario_laravel] WITH PASSWORD = 'StbLaravel_2026!';
-END
-GO
-
 USE [db_capacitaciones_stb]
-GO
-
-IF USER_ID(N'usuario_laravel') IS NULL
-BEGIN
-    CREATE USER [usuario_laravel] FOR LOGIN [usuario_laravel];
-END
-GO
-
-ALTER ROLE [db_owner] ADD MEMBER [usuario_laravel];
 GO
 
 /* ============================================================

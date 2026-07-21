@@ -1336,7 +1336,7 @@
         }
     </style>
 
-    <script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">
         document.addEventListener('DOMContentLoaded', function () {
             const urlAvanceContenido = "{{ route('mis_modulos.avance_contenido', [$miCapacitacion->id_empleado_capacitacion, $modulo->id_capacitacion_modulo]) }}";
             const tokenAvanceContenido = "{{ csrf_token() }}";

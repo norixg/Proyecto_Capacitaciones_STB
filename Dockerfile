@@ -80,6 +80,7 @@ COPY . .
 COPY --from=node_builder /app/public/build ./public/build
 
 COPY .docker/php.ini /usr/local/etc/php/conf.d/capacitaciones.ini
+COPY .docker/apache-security.conf /etc/apache2/conf-enabled/zz-security-hardening.conf
 COPY .docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 
 RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint; \

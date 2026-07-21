@@ -324,11 +324,19 @@ class UserController extends Controller
 
         $credenciales = app(CredencialTemporalService::class);
         $passwordTemporal = $credenciales->generar();
+        $credencialAnterior = [
+            'password' => $usuario->getRawOriginal('password'),
+            'debe_cambiar_password' => $usuario->debe_cambiar_password,
+            'password_temporal_expira_en' => $usuario->password_temporal_expira_en,
+            'remember_token' => $usuario->remember_token,
+        ];
         $credenciales->preparar($usuario, $passwordTemporal);
 
         try {
             $credenciales->enviar($usuario, $passwordTemporal);
         } catch (Throwable $e) {
+            $usuario->forceFill($credencialAnterior)->save();
+
             Log::error('No se pudo enviar el correo de nueva contraseña temporal.', [
                 'id_usuario' => $usuario->id,
                 'id_administrador' => Auth::id(),
@@ -337,7 +345,7 @@ class UserController extends Controller
             ]);
 
             return redirect()->route('usuarios.index')->withErrors([
-                'general' => 'Se invalidó la contraseña anterior, pero no se pudo enviar el correo. Revisa la configuración SMTP y genera otra contraseña temporal.',
+                'general' => 'No se pudo enviar el correo. La contraseña anterior continúa funcionando; revisa la configuración SMTP e inténtalo nuevamente.',
             ]);
         }
 

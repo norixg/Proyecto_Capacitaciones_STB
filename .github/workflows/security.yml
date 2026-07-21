@@ -1,0 +1,42 @@
+name: Security checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, mbstring, sqlite3
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependencias PHP
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Auditar dependencias PHP
+        run: composer audit --locked
+
+      - name: Instalar y auditar dependencias web
+        run: |
+          npm ci
+          npm audit --audit-level=high
+
+      - name: Compilar recursos web
+        run: npm run build
+
+      - name: Ejecutar pruebas
+        run: vendor/bin/phpunit

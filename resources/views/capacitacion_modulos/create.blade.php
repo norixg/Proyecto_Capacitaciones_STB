@@ -189,8 +189,8 @@
 
     <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 
-    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}" src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}" src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
 
     <style>
         .editor-contenido-seccion-modulo .ql-editor {
@@ -458,7 +458,7 @@
     }
     </style>
 
-    <script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">
         const urlSubidaImagenTeoriaModulo = "{{ route('capacitacion_modulos.teoria.imagen') }}";
         const tokenCsrfTeoriaModulo = "{{ csrf_token() }}";
 

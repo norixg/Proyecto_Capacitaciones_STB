@@ -63,7 +63,6 @@ class CapacitacionRecursoController extends Controller
             'titulo' => $request->filled('titulo') ? trim((string) $request->titulo) : null,
             'descripcion' => $request->descripcion !== null ? trim((string) $request->descripcion) : null,
             'url_recurso' => $request->url_recurso !== null ? trim((string) $request->url_recurso) : null,
-            'ruta_archivo' => $request->ruta_archivo !== null ? trim((string) $request->ruta_archivo) : null,
         ]);
 
         $request->validate([
@@ -71,8 +70,7 @@ class CapacitacionRecursoController extends Controller
             'id_capacitacion_modulo_seccion' => ['nullable', 'integer', 'exists:capacitacion_modulo_seccion,id_capacitacion_modulo_seccion'],
             'titulo' => ['nullable', 'string', 'max:250'],
             'descripcion' => ['nullable', 'string', 'max:2000'],
-            'url_recurso' => ['nullable', 'string', 'max:1000'],
-            'ruta_archivo' => ['nullable', 'string', 'max:1000'],
+            'url_recurso' => ['nullable', 'url:http,https', 'max:1000'],
             'archivo_recurso' => [
                 'nullable',
                 'file',
@@ -112,7 +110,7 @@ class CapacitacionRecursoController extends Controller
                 ->withInput();
         }
 
-        $rutaArchivo = $request->ruta_archivo ?: null;
+        $rutaArchivo = null;
 
         if ($request->hasFile('archivo_recurso')) {
             $rutaArchivo = $request->file('archivo_recurso')->store('capacitaciones/recursos', 'public');
@@ -172,7 +170,6 @@ class CapacitacionRecursoController extends Controller
         $request->merge([
             'titulo' => $request->filled('titulo') ? trim((string) $request->titulo) : null,            'descripcion' => $request->descripcion !== null ? trim((string) $request->descripcion) : null,
             'url_recurso' => $request->url_recurso !== null ? trim((string) $request->url_recurso) : null,
-            'ruta_archivo' => $request->ruta_archivo !== null ? trim((string) $request->ruta_archivo) : null,
         ]);
 
         $request->validate([
@@ -180,8 +177,7 @@ class CapacitacionRecursoController extends Controller
             'id_capacitacion_modulo_seccion' => ['nullable', 'integer', 'exists:capacitacion_modulo_seccion,id_capacitacion_modulo_seccion'],
             'titulo' => ['nullable', 'string', 'max:250'],
             'descripcion' => ['nullable', 'string', 'max:2000'],
-            'url_recurso' => ['nullable', 'string', 'max:1000'],
-            'ruta_archivo' => ['nullable', 'string', 'max:1000'],
+            'url_recurso' => ['nullable', 'url:http,https', 'max:1000'],
             'archivo_recurso' => [
                 'nullable',
                 'file',
@@ -230,10 +226,6 @@ class CapacitacionRecursoController extends Controller
         }
 
         $rutaArchivo = $recurso->ruta_archivo;
-
-        if ($request->filled('ruta_archivo')) {
-            $rutaArchivo = $request->ruta_archivo;
-        }
 
         if ($request->hasFile('archivo_recurso')) {
             $rutaArchivo = $request->file('archivo_recurso')->store('capacitaciones/recursos', 'public');

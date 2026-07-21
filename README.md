@@ -102,15 +102,15 @@ capacitaciones_stb.sql  Esquema principal de SQL Server
 
 > **Advertencia:** `capacitaciones_stb.sql` elimina las tablas, vistas y procedimientos existentes antes de reconstruirlos. No debe ejecutarse sobre una base con información que se necesite conservar. Haga un respaldo primero.
 
-El sistema espera, de forma predeterminada:
+El sistema espera una base de datos y un usuario de ejecución configurados mediante variables de entorno:
 
 ```text
 Base de datos: db_capacitaciones_stb
-Usuario SQL:   usuario_laravel
-Contraseña:    StbLaravel_2026!
+Usuario SQL:   definido en DB_USERNAME
+Contraseña:    definida mediante un secreto DB_PASSWORD
 ```
 
-Se recomienda cambiar esas credenciales fuera de un entorno local.
+El repositorio no contiene contraseñas predeterminadas. Genere credenciales únicas para cada ambiente.
 
 El encabezado del archivo SQL intenta crear el login antes que la base y usa la base antes de crearla. Para una instalación nueva, prepare primero la base y el login desde una cuenta administradora de SQL Server:
 
@@ -122,18 +122,19 @@ IF DB_ID(N'db_capacitaciones_stb') IS NULL
     CREATE DATABASE [db_capacitaciones_stb];
 GO
 
-IF SUSER_ID(N'usuario_laravel') IS NULL
-    CREATE LOGIN [usuario_laravel] WITH PASSWORD = 'StbLaravel_2026!';
+IF SUSER_ID(N'capacitaciones_runtime') IS NULL
+    CREATE LOGIN [capacitaciones_runtime] WITH PASSWORD = 'REEMPLAZAR_POR_SECRETO_SEGURO';
 GO
 
 USE [db_capacitaciones_stb];
 GO
 
-IF USER_ID(N'usuario_laravel') IS NULL
-    CREATE USER [usuario_laravel] FOR LOGIN [usuario_laravel];
+IF USER_ID(N'capacitaciones_runtime') IS NULL
+    CREATE USER [capacitaciones_runtime] FOR LOGIN [capacitaciones_runtime];
 GO
 
-ALTER ROLE [db_owner] ADD MEMBER [usuario_laravel];
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::dbo TO [capacitaciones_runtime];
+GRANT EXECUTE ON SCHEMA::dbo TO [capacitaciones_runtime];
 GO
 ```
 
@@ -182,7 +183,7 @@ DB_HOST=127.0.0.1
 DB_PORT=1433
 DB_DATABASE=db_capacitaciones_stb
 DB_USERNAME=usuario_laravel
-DB_PASSWORD=usuario_laravel
+DB_PASSWORD=<genere-una-clave-larga-y-unica>
 DB_ENCRYPT=no
 DB_TRUST_SERVER_CERTIFICATE=true
 
@@ -212,15 +213,21 @@ El script SQL crea los roles y permisos, pero no una cuenta inicial. Abra Tinker
 php artisan tinker
 ```
 
-Para desarrollo puede crear la cuenta `admin@stb.local` con contraseña temporal `Admin123!`:
+Para desarrollo puede crear una cuenta administrativa con una contraseña temporal generada aleatoriamente:
 
 ```php
+$credenciales = app(App\Services\CredencialTemporalService::class);
+$passwordTemporal = $credenciales->generar();
+
 $user = App\Models\User::create([
     'name' => 'Administrador',
-    'email' => 'admin@stb.local',
-    'password' => 'Admin123!',
+    'username' => 'administrador',
+    'email' => 'correo.real@empresa.com',
+    'password' => $passwordTemporal,
     'estado' => 1,
 ]);
+
+$credenciales->preparar($user, $passwordTemporal);
 
 DB::table('user_rol')->insert([
     'id_user' => $user->id,
@@ -228,18 +235,12 @@ DB::table('user_rol')->insert([
 ]);
 
 $user->assignRole('admin');
+$credenciales->enviar($user, $passwordTemporal);
 ```
 
 Salga de Tinker con `exit`. Laravel aplica hash automáticamente a la contraseña mediante el modelo `User`.
 
-Inicie sesión con:
-
-```text
-Correo:     admin@stb.local
-Contraseña: Admin123!
-```
-
-> Esta cuenta no se crea automáticamente al importar el SQL. Ejecute el bloque anterior una sola vez y cambie inmediatamente la contraseña en cualquier entorno compartido o de producción.
+La contraseña temporal llegará al correo configurado y deberá cambiarse durante el primer acceso.
 
 ### 5. Iniciar el entorno
 
@@ -287,7 +288,7 @@ Para dejarlo en segundo plano:
 docker compose up -d --build
 ```
 
-No es obligatorio crear `.env.docker`. Compose proporciona la configuración interna y el punto de entrada genera y conserva `APP_KEY` automáticamente.
+Copie `.env.docker.example` a `.env` y defina como mínimo `MSSQL_SA_PASSWORD`, `DB_PASSWORD`, las credenciales de RR. HH. y el SMTP. `APP_KEY` puede generarse automáticamente únicamente en desarrollo.
 
 Si el puerto 8080 está ocupado:
 
@@ -314,12 +315,18 @@ docker compose exec capacitaciones_app php artisan tinker
 Pegue:
 
 ```php
+$credenciales = app(App\Services\CredencialTemporalService::class);
+$passwordTemporal = $credenciales->generar();
+
 $user = App\Models\User::create([
     'name' => 'Administrador',
-    'email' => 'admin@stb.local',
-    'password' => 'Admin123!',
+    'username' => 'administrador',
+    'email' => 'correo.real@empresa.com',
+    'password' => $passwordTemporal,
     'estado' => 1,
 ]);
+
+$credenciales->preparar($user, $passwordTemporal);
 
 DB::table('user_rol')->insert([
     'id_user' => $user->id,
@@ -327,16 +334,10 @@ DB::table('user_rol')->insert([
 ]);
 
 $user->assignRole('admin');
+$credenciales->enviar($user, $passwordTemporal);
 ```
 
-Escriba `exit` para salir y acceda a `/login` con:
-
-```text
-Correo:     admin@stb.local
-Contraseña: Admin123!
-```
-
-Ejecute este procedimiento solo una vez. Cambie la contraseña antes de utilizar el sistema fuera de un entorno local.
+Escriba `exit` para salir. Las credenciales temporales llegarán al correo indicado y el sistema exigirá cambiar la contraseña en el primer acceso.
 
 ### Persistencia e inicialización
 
@@ -441,6 +442,29 @@ php artisan optimize
 ```
 
 Además, configure respaldos de SQL Server y de `storage/app/public`, SMTP real, HTTPS, rotación de logs y ejecución periódica del scheduler.
+
+## Despliegue de producción
+
+1. Copie `.env.production.example` como `.env.production` fuera del repositorio y complete todos los secretos. Genere una clave estable con `php artisan key:generate --show` y guárdela en `APP_KEY`.
+2. Publique la aplicación detrás de un proxy HTTPS. El Compose productivo solo enlaza Apache con `127.0.0.1` para evitar exposición directa.
+3. Ejecute las migraciones con una identidad de despliegue autorizada para modificar el esquema. La cuenta `DB_USERNAME` de ejecución no debe ser `db_owner` ni tener permisos DDL.
+4. Aplique `database/security/runtime_permissions.sql` al usuario de ejecución y confirme que no pueda crear tablas.
+5. Levante los servicios:
+
+```bash
+docker compose -f docker-compose.production.yml build
+docker compose -f docker-compose.production.yml up -d
+```
+
+6. Compruebe `/up`, las cabeceras HTTPS, el envío SMTP, los trabajadores de cola y el scheduler. Mantenga respaldos verificables de SQL Server y del volumen `production_uploads`.
+
+Antes de cada despliegue ejecute:
+
+```bash
+composer audit --locked
+npm audit --audit-level=high
+php artisan test
+```
 
 ## Solución de problemas
 

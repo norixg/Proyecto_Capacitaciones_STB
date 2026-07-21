@@ -6,7 +6,7 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Developer
-      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-StbDocker_SA2026!}"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en .env}"
     volumes:
       - sqlserver_data:/var/opt/mssql
     healthcheck:
@@ -26,7 +26,9 @@ services:
       sqlserver:
         condition: service_healthy
     environment:
-      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-StbDocker_SA2026!}"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en .env}"
+      DB_USERNAME: "${DB_USERNAME:-usuario_laravel}"
+      DB_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD en .env}"
     volumes:
       - ./capacitaciones_stb.sql:/docker-entrypoint-initdb.d/capacitaciones_stb.sql:ro
       - ./.docker/init-sqlserver.sh:/usr/local/bin/init-sqlserver:ro
@@ -60,7 +62,7 @@ services:
       DB_PORT: 1433
       DB_DATABASE: db_capacitaciones_stb
       DB_USERNAME: usuario_laravel
-      DB_PASSWORD: "StbLaravel_2026!"
+      DB_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD en .env}"
       DB_ENCRYPT: "no"
       DB_TRUST_SERVER_CERTIFICATE: "true"
       RRHH_DB_HOST: "${RRHH_DB_HOST:-host.docker.internal}"
@@ -74,6 +76,7 @@ services:
       CACHE_STORE: file
       QUEUE_CONNECTION: sync
       FILESYSTEM_DISK: local
+      RUN_MIGRATIONS: "true"
       MAIL_MAILER: "${MAIL_MAILER:-smtp}"
       MAIL_SCHEME: "${MAIL_SCHEME:-smtp}"
       MAIL_HOST: "${MAIL_HOST:-host.docker.internal}"

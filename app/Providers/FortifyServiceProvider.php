@@ -17,7 +17,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // La aplicación define explícitamente sus rutas en routes/auth.php.
+        Fortify::ignoreRoutes();
     }
 
     /**

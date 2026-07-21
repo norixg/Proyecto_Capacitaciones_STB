@@ -1414,7 +1414,7 @@
         @endforeach
     @endforeach
 
-    <script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">
         function abrirModal(id) {
             const modal = document.getElementById(id);
 

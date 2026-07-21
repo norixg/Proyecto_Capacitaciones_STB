@@ -54,7 +54,7 @@ class CapacitacionModuloController extends Controller
             'secciones_titulo' => ['nullable', 'array'],
             'secciones_titulo.*' => ['nullable', 'string', 'max:250'],
             'secciones_contenido' => ['nullable', 'array'],
-            'secciones_contenido.*' => ['nullable', 'string'],
+            'secciones_contenido.*' => ['nullable', 'string', 'max:100000'],
             'secciones_contenido_tocado' => ['nullable', 'array'],
             'secciones_contenido_tocado.*' => ['nullable', 'in:0,1'],
             'secciones_nivel' => ['nullable', 'array'],
@@ -287,7 +287,7 @@ class CapacitacionModuloController extends Controller
             'secciones_titulo' => ['nullable', 'array'],
             'secciones_titulo.*' => ['nullable', 'string', 'max:250'],
             'secciones_contenido' => ['nullable', 'array'],
-            'secciones_contenido.*' => ['nullable', 'string'],
+            'secciones_contenido.*' => ['nullable', 'string', 'max:100000'],
             'secciones_nivel' => ['nullable', 'array'],
             'secciones_nivel.*' => ['nullable', 'in:1,2'],
             'secciones_padre' => ['nullable', 'array'],
@@ -518,22 +518,7 @@ class CapacitacionModuloController extends Controller
 
     private function limpiarHtmlTeoria(?string $contenido): ?string
     {
-        $contenido = trim((string) $contenido);
-
-        if ($contenido === '' || $contenido === '<p><br></p>') {
-            return null;
-        }
-
-        $etiquetasPermitidas = '<p><br><strong><b><em><i><u><s><strike><ol><ul><li><blockquote><pre><code><h1><h2><h3><h4><h5><h6><a><span><sub><sup><img>';
-
-        $contenido = strip_tags($contenido, $etiquetasPermitidas);
-
-        $contenido = preg_replace('/on\w+="[^"]*"/i', '', $contenido);
-        $contenido = preg_replace("/on\w+='[^']*'/i", '', $contenido);
-        $contenido = preg_replace('/javascript:/i', '', $contenido);
-        $contenido = trim($contenido);
-
-        return $contenido !== '' ? $contenido : null;
+        return app(\App\Services\ContenidoHtmlSeguro::class)->limpiar($contenido);
     }
 
     public function subirImagenTeoria(Request $request)

@@ -24,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->configureDefaults();
+
         try {
             if (config('database.default') === 'sqlsrv' && extension_loaded('pdo_sqlsrv')) {
                 DB::statement('SET DATEFORMAT ymd');
@@ -44,14 +46,16 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null,
-        );
+        $regla = Password::min(12)
+            ->mixedCase()
+            ->letters()
+            ->numbers()
+            ->symbols();
+
+        if (app()->isProduction()) {
+            $regla->uncompromised();
+        }
+
+        Password::defaults(fn (): Password => $regla);
     }
 }

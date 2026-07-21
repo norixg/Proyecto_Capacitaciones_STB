@@ -152,7 +152,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">
         document.addEventListener('DOMContentLoaded', function () {
             const filtro = document.getElementById('filtro-empleados');
             const items = document.querySelectorAll('.empleado-item');

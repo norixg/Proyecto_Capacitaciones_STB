@@ -232,7 +232,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">
         document.addEventListener('DOMContentLoaded', function () {
             const buscador = document.getElementById('buscadorMisCapacitaciones');
             const tarjetas = document.querySelectorAll('[data-mis-capacitaciones-card]');

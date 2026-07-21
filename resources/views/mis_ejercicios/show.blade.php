@@ -618,7 +618,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="{{ request()->attributes->get('csp_nonce') }}">
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.ordenar-container').forEach(function (container) {
                 let draggedItem = null;
@@ -879,7 +879,7 @@
 
     </script>
 
-        <script>
+        <script nonce="{{ request()->attributes->get('csp_nonce') }}">
             document.addEventListener('DOMContentLoaded', function () {
                 const segundosIniciales = @json($segundosRestantes);
 

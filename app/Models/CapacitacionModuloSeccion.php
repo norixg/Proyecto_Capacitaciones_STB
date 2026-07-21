@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\ContenidoHtmlSeguro;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CapacitacionRecurso;
 use App\Models\Ejercicio;
@@ -31,6 +33,14 @@ class CapacitacionModuloSeccion extends Model
         'nivel' => 'integer',
         'estado' => 'integer',
     ];
+
+    protected function contenido(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($valor) => app(ContenidoHtmlSeguro::class)->limpiar($valor),
+            set: fn ($valor) => app(ContenidoHtmlSeguro::class)->limpiar($valor),
+        );
+    }
 
     public function modulo()
     {

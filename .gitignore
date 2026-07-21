@@ -44,6 +44,7 @@
 # SÍ se permiten ejemplos para instalación / Docker
 !.env.example
 !.env.docker.example
+!.env.production.example
 
 # ==========================================================
 # DOCKER
@@ -121,6 +122,4 @@ yarn-error.log
 /resources/views/layouts/app/header.blade.php
 /resources/views/layouts/app/sidebar.blade.php
 
-# Workflows/tests locales no preparados para entrega
-/.github/
-/tests/
+# Las pruebas y los workflows de CI forman parte del proyecto.

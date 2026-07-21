@@ -3,6 +3,11 @@ set -e
 
 # En desarrollo Docker se conserva una clave generada dentro de storage para
 # que una instalación nueva funcione sin requerir un .env local.
+if [ "${APP_ENV:-local}" = "production" ] && [ -z "${APP_KEY:-}" ]; then
+    echo "ERROR: APP_KEY es obligatorio y debe ser persistente en producción." >&2
+    exit 1
+fi
+
 if [ -z "${APP_KEY:-}" ]; then
     APP_KEY_FILE="storage/.docker_app_key"
 
@@ -27,8 +32,14 @@ if [ ! -L public/storage ]; then
     php artisan storage:link || true
 fi
 
-php artisan config:clear || true
-php artisan route:clear || true
-php artisan view:clear || true
+if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
+    php artisan migrate --force
+fi
+
+if [ "${APP_ENV:-local}" = "production" ]; then
+    php artisan optimize
+else
+    php artisan optimize:clear || true
+fi
 
 exec "$@"
