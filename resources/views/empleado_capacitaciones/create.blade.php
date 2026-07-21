@@ -27,15 +27,15 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                             <div class="mb-4 md:col-span-2">
-                                <label class="block mb-1 font-medium">Capacitación</label>
-                                <select name="id_capacitacion" class="w-full border rounded px-3 py-2 text-black @error('id_capacitacion') border-red-500 @enderror">
-                                    <option value="">Seleccione</option>
-                                    @foreach($capacitaciones as $capacitacion)
-                                        <option value="{{ $capacitacion->id_capacitacion }}" {{ old('id_capacitacion') == $capacitacion->id_capacitacion ? 'selected' : '' }}>
-                                            {{ $capacitacion->capacitacion }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <label for="id_capacitacion" class="block mb-1 font-medium">Capacitación</label>
+
+                                <x-autocomplete-select
+                                    name="id_capacitacion"
+                                    :options="$opcionesCapacitaciones"
+                                    :selected="old('id_capacitacion', '')"
+                                    placeholder="Buscar capacitación por nombre o ID"
+                                />
+
                                 @error('id_capacitacion') <p class="text-red-500 text-sm">{{ $message }}</p> @enderror
                             </div>
 

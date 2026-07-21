@@ -9,7 +9,6 @@ use App\Models\EmpleadoCapacitacion;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 
 class AvisoCorreoService
@@ -382,25 +381,11 @@ class AvisoCorreoService
             ? Carbon::parse($asignacion->fecha_vencimiento)->format('d/m/Y')
             : 'No definida';
 
-        $correoAcceso = $usuario?->email ?? 'No disponible';
-        $passwordAcceso = 'No disponible. Solicitá tu contraseña al administrador.';
-
-        if ($usuario?->password_temporal_notificacion) {
-            try {
-                $passwordAcceso = Crypt::decryptString($usuario->password_temporal_notificacion);
-            } catch (\Throwable $e) {
-                $passwordAcceso = 'No disponible. Solicitá tu contraseña al administrador.';
-            }
-        }
-
         return "Hola {$empleado}.\n\n"
             . "Se te ha asignado una nueva capacitación en el sistema.\n\n"
             . "Capacitación: {$capacitacion}\n"
             . "Fecha límite: {$fechaLimite}\n"
             . "Fecha de vencimiento: {$fechaVencimiento}\n\n"
-            . "Credenciales de acceso al sistema:\n"
-            . "Correo: {$correoAcceso}\n"
-            . "Contraseña: {$passwordAcceso}\n\n"
             . "Por favor ingresa al sistema de capacitaciones y completá la capacitación asignada dentro del plazo establecido.";
     }
 

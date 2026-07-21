@@ -15,6 +15,10 @@ class PasswordController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        if ($request->user()?->debeCambiarPassword()) {
+            return redirect()->route('password.temporal.edit');
+        }
+
         $validated = $request->validateWithBag('updatePassword', [
             'current_password' => ['required', 'current_password'],
             'password' => ['required', Password::defaults(), 'confirmed'],
@@ -22,6 +26,8 @@ class PasswordController extends Controller
 
         $request->user()->update([
             'password' => Hash::make($validated['password']),
+            'debe_cambiar_password' => 0,
+            'password_temporal_expira_en' => null,
         ]);
 
         return back()->with('status', 'password-updated');

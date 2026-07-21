@@ -28,7 +28,7 @@ class EmpleadoUser extends Model
 
     public function empleado()
     {
-        return $this->belongsTo(Empleado::class, 'id_empleado', 'id_empleado');
+        return $this->belongsTo(EmpleadoRrhh::class, 'id_empleado', 'id_empleado');
     }
 
     public function user()

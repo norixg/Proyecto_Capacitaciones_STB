@@ -4,23 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Rol;
-use App\Models\Empleado;
+use App\Models\EmpleadoRrhh;
 use App\Models\UserRol;
 use App\Models\EmpleadoUser;
+use App\Models\InstructorRrhh;
+use App\Models\InstructorUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Models\Capacitacion;
 use App\Models\EmpleadoCapacitacion;
 use App\Models\HistorialCapacitacionEmpleado;
+use App\Services\CredencialTemporalService;
 use Spatie\Permission\Models\Role as SpatieRole;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Validation\Rule;
+use Throwable;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $usuarios = User::with(['rolesSistema', 'empleadoUser.empleado'])
+        $usuarios = User::with(['rolesSistema', 'empleadoUser.empleado', 'instructorUser.instructor'])
             ->orderBy('id', 'desc')
             ->get();
 
@@ -30,15 +35,28 @@ class UserController extends Controller
     public function create()
     {
         $roles = Rol::where('estado', 1)->orderBy('rol')->get();
-        $empleados = Empleado::orderBy('nombre_completo')->get();
+        $empleados = EmpleadoRrhh::query()
+            ->where('estado', 1)
+            ->orderBy('nombre_completo')
+            ->get(['id_empleado', 'nombre_completo', 'codigo_empleado']);
+        $instructores = $this->instructoresRrhhDisponibles();
 
-        return view('usuarios.create', compact('roles', 'empleados'));
+        return view('usuarios.create', compact('roles', 'empleados', 'instructores'));
     }
 
     public function store(Request $request)
     {
+        $request->merge([
+            'username' => strtolower(trim((string) $request->input('username'))),
+            'email' => strtolower(trim((string) $request->input('email'))),
+        ]);
+
+        $rolSolicitado = Rol::find($request->input('id_rol'));
+        $esRolInstructor = strtolower(trim((string) ($rolSolicitado?->rol ?? ''))) === 'instructor';
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-z0-9._-]+$/', 'unique:users,username'],
             'email' => [
                 'required',
                 'string',
@@ -46,12 +64,29 @@ class UserController extends Controller
                 'regex:/^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/',
                 'unique:users,email',
             ],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
             'estado' => ['required', 'in:0,1'],
             'id_rol' => ['required', 'exists:rol,id_rol'],
-            'id_empleado' => ['nullable', 'exists:empleado,id_empleado'],
+            'id_empleado' => [
+                'nullable',
+                Rule::exists('rrhh.empleado', 'id_empleado')->where(
+                    fn ($query) => $query->where('estado', 1)
+                ),
+            ],
+            'id_instructor' => [
+                Rule::requiredIf($esRolInstructor),
+                'nullable',
+                'integer',
+                Rule::exists('rrhh.instructor', 'id_instructor'),
+                Rule::unique('instructor_user', 'id_instructor'),
+            ],
         ], [
+            'username.regex' => 'El usuario solo puede contener letras minúsculas, números, punto, guion y guion bajo.',
+            'username.unique' => 'Ese nombre de usuario ya está registrado.',
             'email.regex' => 'El correo debe tener un formato válido, por ejemplo: correo.prueba123@dominio.com',
+            'id_empleado.exists' => 'El empleado seleccionado no está disponible o todavía no ha sido sincronizado con Capacitaciones.',
+            'id_instructor.required' => 'Debes vincular un instructor de Recursos Humanos para este rol.',
+            'id_instructor.exists' => 'El instructor seleccionado no existe en Recursos Humanos.',
+            'id_instructor.unique' => 'Ese instructor ya está vinculado a otro usuario.',
         ]);
 
         if ($request->filled('id_empleado')) {
@@ -66,14 +101,19 @@ class UserController extends Controller
             }
         }
 
-        DB::transaction(function () use ($request) {
+        $credenciales = app(CredencialTemporalService::class);
+        $passwordTemporal = $credenciales->generar();
+
+        $user = DB::transaction(function () use ($request, $credenciales, $passwordTemporal, $esRolInstructor) {
             $user = User::create([
                 'name' => $request->name,
+                'username' => strtolower($request->username),
                 'email' => $request->email,
-                'password' => $request->password,
-                'password_temporal_notificacion' => Crypt::encryptString($request->password),
+                'password' => $passwordTemporal,
                 'estado' => $request->estado,
             ]);
+
+            $credenciales->preparar($user, $passwordTemporal);
 
             UserRol::create([
                 'id_user' => $user->id,
@@ -88,30 +128,77 @@ class UserController extends Controller
                     'id_empleado' => $request->id_empleado,
                 ]);
             }
+
+            if ($esRolInstructor && $request->filled('id_instructor')) {
+                InstructorUser::create([
+                    'id_user' => $user->id,
+                    'id_instructor' => $request->id_instructor,
+                    'fecha_asignacion' => now(),
+                ]);
+            }
+
+            return $user;
         });
 
-        return redirect()->route('usuarios.index')->with('success', 'Usuario creado correctamente.');
+        try {
+            $credenciales->enviar($user, $passwordTemporal);
+        } catch (Throwable $e) {
+            Log::error('No se pudo enviar el correo inicial de credenciales temporales.', [
+                'id_usuario' => $user->id,
+                'id_administrador' => Auth::id(),
+                'excepcion' => $e::class,
+                'mensaje' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('usuarios.index')->withErrors([
+                'general' => 'El usuario fue creado, pero no se pudo enviar el correo de credenciales. Configura el correo SMTP y usa “Generar contraseña temporal” para emitir una nueva.',
+            ]);
+        }
+
+        Log::notice('Usuario creado con credencial temporal.', [
+            'id_usuario' => $user->id,
+            'id_administrador' => Auth::id(),
+        ]);
+
+        return redirect()->route('usuarios.index')->with('success', 'Usuario creado y credenciales temporales enviadas correctamente.');
     }
 
     public function edit($id)
     {
-        $usuario = User::with(['rolesSistema', 'empleadoUser'])->findOrFail($id);
+        $usuario = User::with(['rolesSistema', 'empleadoUser', 'instructorUser'])->findOrFail($id);
         $roles = Rol::where('estado', 1)->orderBy('rol')->get();
-        $empleados = Empleado::orderBy('nombre_completo')->get();
+        $empleados = EmpleadoRrhh::query()
+            ->where('estado', 1)
+            ->orderBy('nombre_completo')
+            ->get(['id_empleado', 'nombre_completo', 'codigo_empleado']);
+        $instructores = $this->instructoresRrhhDisponibles();
 
         $usuarioLogueado = Auth::user();
         $esPropioUsuario = (int) $usuarioLogueado->id === (int) $usuario->id;
 
-        return view('usuarios.edit', compact('usuario', 'roles', 'empleados', 'esPropioUsuario'));
+        return view('usuarios.edit', compact('usuario', 'roles', 'empleados', 'instructores', 'esPropioUsuario'));
     }
 
     public function update(Request $request, $id)
     {
-        $usuario = User::with(['userRoles', 'empleadoUser', 'rolesSistema'])->findOrFail($id);
+        $request->merge([
+            'username' => strtolower(trim((string) $request->input('username'))),
+            'email' => strtolower(trim((string) $request->input('email'))),
+        ]);
+
+        $usuario = User::with(['userRoles', 'empleadoUser', 'instructorUser', 'rolesSistema'])->findOrFail($id);
         $usuarioLogueado = Auth::user();
+        $rolSolicitado = Rol::find($request->input('id_rol'));
+        $esRolInstructor = strtolower(trim((string) ($rolSolicitado?->rol ?? ''))) === 'instructor';
+        $reglaInstructorUnico = Rule::unique('instructor_user', 'id_instructor');
+
+        if ($usuario->instructorUser) {
+            $reglaInstructorUnico->ignore($usuario->instructorUser->id_instructor, 'id_instructor');
+        }
 
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-z0-9._-]+$/', Rule::unique('users', 'username')->ignore($usuario->id)],
             'email' => [
                 'required',
                 'string',
@@ -119,12 +206,29 @@ class UserController extends Controller
                 'regex:/^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/',
                 'unique:users,email,' . $usuario->id,
             ],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'estado' => ['required', 'in:0,1'],
             'id_rol' => ['required', 'exists:rol,id_rol'],
-            'id_empleado' => ['nullable', 'exists:empleado,id_empleado'],
+            'id_empleado' => [
+                'nullable',
+                Rule::exists('rrhh.empleado', 'id_empleado')->where(
+                    fn ($query) => $query->where('estado', 1)
+                ),
+            ],
+            'id_instructor' => [
+                Rule::requiredIf($esRolInstructor),
+                'nullable',
+                'integer',
+                Rule::exists('rrhh.instructor', 'id_instructor'),
+                $reglaInstructorUnico,
+            ],
         ], [
+            'username.regex' => 'El usuario solo puede contener letras minúsculas, números, punto, guion y guion bajo.',
+            'username.unique' => 'Ese nombre de usuario ya está registrado.',
             'email.regex' => 'El correo debe tener un formato válido, por ejemplo: correo.prueba123@dominio.com',
+            'id_empleado.exists' => 'El empleado seleccionado no está disponible en Recursos Humanos.',
+            'id_instructor.required' => 'Debes vincular un instructor de Recursos Humanos para este rol.',
+            'id_instructor.exists' => 'El instructor seleccionado no existe en Recursos Humanos.',
+            'id_instructor.unique' => 'Ese instructor ya está vinculado a otro usuario.',
         ]);
 
         if ($request->filled('id_empleado')) {
@@ -159,17 +263,13 @@ class UserController extends Controller
                 ]);
         }
 
-        DB::transaction(function () use ($request, $usuario) {
+        DB::transaction(function () use ($request, $usuario, $esRolInstructor) {
             $datosActualizar = [
                 'name' => $request->name,
+                'username' => strtolower($request->username),
                 'email' => $request->email,
                 'estado' => $request->estado,
             ];
-
-            if ($request->filled('password')) {
-                $datosActualizar['password'] = $request->password;
-                $datosActualizar['password_temporal_notificacion'] = Crypt::encryptString($request->password);
-            }
 
             $usuario->update($datosActualizar);
 
@@ -190,9 +290,63 @@ class UserController extends Controller
                     'id_empleado' => $request->id_empleado,
                 ]);
             }
+
+            InstructorUser::where('id_user', $usuario->id)->delete();
+
+            if ($esRolInstructor && $request->filled('id_instructor')) {
+                InstructorUser::create([
+                    'id_user' => $usuario->id,
+                    'id_instructor' => $request->id_instructor,
+                    'fecha_asignacion' => now(),
+                ]);
+            }
         });
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario actualizado correctamente.');
+    }
+
+    public function generarPasswordTemporal($id)
+    {
+        $usuario = User::with('rolesSistema')->findOrFail($id);
+        $usuarioLogueado = Auth::user();
+
+        if ((int) $usuarioLogueado->id === (int) $usuario->id) {
+            return redirect()->route('usuarios.index')->withErrors([
+                'general' => 'No puedes generar una contraseña temporal para tu propia sesión administrativa.',
+            ]);
+        }
+
+        if ((int) $usuario->estado !== 1) {
+            return redirect()->route('usuarios.index')->withErrors([
+                'general' => 'Activa el usuario antes de generar nuevas credenciales.',
+            ]);
+        }
+
+        $credenciales = app(CredencialTemporalService::class);
+        $passwordTemporal = $credenciales->generar();
+        $credenciales->preparar($usuario, $passwordTemporal);
+
+        try {
+            $credenciales->enviar($usuario, $passwordTemporal);
+        } catch (Throwable $e) {
+            Log::error('No se pudo enviar el correo de nueva contraseña temporal.', [
+                'id_usuario' => $usuario->id,
+                'id_administrador' => Auth::id(),
+                'excepcion' => $e::class,
+                'mensaje' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('usuarios.index')->withErrors([
+                'general' => 'Se invalidó la contraseña anterior, pero no se pudo enviar el correo. Revisa la configuración SMTP y genera otra contraseña temporal.',
+            ]);
+        }
+
+        Log::notice('Contraseña temporal regenerada por administración.', [
+            'id_usuario' => $usuario->id,
+            'id_administrador' => Auth::id(),
+        ]);
+
+        return redirect()->route('usuarios.index')->with('success', 'Se generó una nueva contraseña temporal y fue enviada al usuario.');
     }
 
     public function toggleEstado($id)
@@ -228,7 +382,7 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        $usuario = User::with(['rolesSistema', 'userRoles', 'empleadoUser'])->findOrFail($id);
+        $usuario = User::with(['rolesSistema', 'userRoles', 'empleadoUser', 'instructorUser'])->findOrFail($id);
         $usuarioLogueado = Auth::user();
 
         if ((int) $usuarioLogueado->id === (int) $usuario->id) {
@@ -260,6 +414,10 @@ class UserController extends Controller
         DB::transaction(function () use ($usuario) {
             if ($usuario->empleadoUser) {
                 $usuario->empleadoUser->delete();
+            }
+
+            if ($usuario->instructorUser) {
+                $usuario->instructorUser->delete();
             }
 
             if ($usuario->userRoles()->exists()) {
@@ -309,6 +467,17 @@ class UserController extends Controller
         }
 
         $usuario->syncRoles($nombresRoles);
+    }
+
+    private function instructoresRrhhDisponibles()
+    {
+        return InstructorRrhh::query()
+            ->orderBy('instructor')
+            ->get([
+                'id_instructor',
+                'instructor',
+                'institucion',
+            ]);
     }
 
 }

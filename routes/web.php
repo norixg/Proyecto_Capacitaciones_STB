@@ -31,7 +31,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth', 'active'])->group(function () {
+Route::middleware(['auth', 'active', 'password.changed'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -67,7 +67,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/mis-capacitaciones/{id_empleado_capacitacion}/intentos/{id_intento}/resultado', [MiEvaluacionController::class, 'resultado'])->name('mis_evaluaciones.resultado');
 });
 
-    Route::middleware(['auth', 'active', 'rol:admin,instructor'])->group(function () {
+    Route::middleware(['auth', 'active', 'password.changed', 'rol:admin,instructor'])->group(function () {
 
         Route::middleware(['rol:admin'])->group(function () {
             Route::get('/admin', function () {
@@ -80,6 +80,9 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('/usuarios/{id}/editar', [UserController::class, 'edit'])->name('usuarios.edit');
             Route::put('/usuarios/{id}', [UserController::class, 'update'])->name('usuarios.update');
             Route::patch('/usuarios/{id}/toggle-estado', [UserController::class, 'toggleEstado'])->name('usuarios.toggleEstado');
+            Route::post('/usuarios/{id}/generar-password-temporal', [UserController::class, 'generarPasswordTemporal'])
+                ->middleware('throttle:3,1')
+                ->name('usuarios.generar_password_temporal');
             Route::delete('/usuarios/{id}', [UserController::class, 'destroy'])->name('usuarios.destroy');
 
             Route::get('/instructores', [InstructorController::class, 'index'])->name('instructores.index');
@@ -175,10 +178,9 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         Route::middleware(['rol:admin'])->group(function () {
             Route::get('/matriz-puestos-capacitacion', [PuestoCapacitacionController::class, 'index'])->name('puestos_capacitacion.index');
-            Route::post('/matriz-puestos-capacitacion', [PuestoCapacitacionController::class, 'store'])->name('puestos_capacitacion.store');
-            Route::post('/matriz-puestos-capacitacion/generar-asignaciones', [PuestoCapacitacionController::class, 'generarAsignaciones'])->name('puestos_capacitacion.generar');
 
             Route::get('/necesidades-capacitacion', [NecesidadCapacitacionController::class, 'index'])->name('necesidades_capacitacion.index');
+            Route::get('/necesidades-capacitacion/exportar', [NecesidadCapacitacionController::class, 'exportar'])->name('necesidades_capacitacion.exportar');
 
             Route::get('/asignaciones-capacitacion', [EmpleadoCapacitacionController::class, 'index'])->name('empleado_capacitaciones.index');
             Route::get('/asignaciones-capacitacion/crear', [EmpleadoCapacitacionController::class, 'create'])->name('empleado_capacitaciones.create');

@@ -18,7 +18,7 @@ use App\Models\HistorialCapacitacionEmpleado;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use App\Models\User;
-use App\Models\Instructor;
+use App\Models\InstructorRrhh;
 use App\Services\AvanceModuloContenidoService;
 
 class SeguimientoCapacitacionController extends Controller
@@ -44,13 +44,13 @@ class SeguimientoCapacitacionController extends Controller
         return $this->usuarioAutenticado()?->esAdminSistema() === true;
     }
 
-    private function instructorActual(): ?Instructor
+    private function instructorActual(): ?InstructorRrhh
     {
         if ($this->usuarioEsAdmin()) {
             return null;
         }
 
-        return $this->usuarioAutenticado()?->instructorInternoActual();
+        return $this->usuarioAutenticado()?->instructorRrhhActual();
     }
 
     private function consultaSeguimientoAutorizada()
@@ -64,19 +64,11 @@ class SeguimientoCapacitacionController extends Controller
         $instructor = $this->instructorActual();
 
         if (!$instructor) {
-            abort(403, 'Tu usuario instructor debe estar vinculado a un empleado interno y a un registro de instructor activo.');
+            abort(403, 'Tu usuario debe estar vinculado a un instructor de Recursos Humanos.');
         }
 
-        $idUsuario = Auth::id();
-
-        return $query->whereHas('capacitacion', function ($capacitacionQuery) use ($instructor, $idUsuario) {
-            $capacitacionQuery->where(function ($subQuery) use ($instructor, $idUsuario) {
-                $subQuery->where('id_instructor', $instructor->id_instructor);
-
-                if ($idUsuario) {
-                    $subQuery->orWhere('created_by', $idUsuario);
-                }
-            });
+        return $query->whereHas('capacitacion', function ($capacitacionQuery) use ($instructor) {
+            $capacitacionQuery->where('id_instructor', $instructor->id_instructor);
         });
     }
 
@@ -91,18 +83,10 @@ class SeguimientoCapacitacionController extends Controller
         $instructor = $this->instructorActual();
 
         if (!$instructor) {
-            abort(403, 'Tu usuario instructor debe estar vinculado a un empleado interno y a un registro de instructor activo.');
+            abort(403, 'Tu usuario debe estar vinculado a un instructor de Recursos Humanos.');
         }
 
-        $idUsuario = Auth::id();
-
-        return $query->where(function ($subQuery) use ($instructor, $idUsuario) {
-            $subQuery->where('id_instructor', $instructor->id_instructor);
-
-            if ($idUsuario) {
-                $subQuery->orWhere('created_by', $idUsuario);
-            }
-        });
+        return $query->where('id_instructor', $instructor->id_instructor);
     }
 
     private function asegurarAccesoSeguimiento(EmpleadoCapacitacion $seguimiento): void
@@ -114,17 +98,14 @@ class SeguimientoCapacitacionController extends Controller
         $instructor = $this->instructorActual();
 
         if (!$instructor) {
-            abort(403, 'Tu usuario instructor debe estar vinculado a un empleado interno y a un registro de instructor activo.');
+            abort(403, 'Tu usuario debe estar vinculado a un instructor de Recursos Humanos.');
         }
 
         $seguimiento->loadMissing('capacitacion');
 
-        $idUsuario = Auth::id();
-
         $perteneceAlInstructor = (int) $seguimiento->capacitacion?->id_instructor === (int) $instructor->id_instructor;
-        $fueCreadaPorInstructor = $idUsuario && (int) $seguimiento->capacitacion?->created_by === (int) $idUsuario;
 
-        if (!$perteneceAlInstructor && !$fueCreadaPorInstructor) {
+        if (!$perteneceAlInstructor) {
             abort(403, 'Solo puedes ver seguimiento de tus capacitaciones como instructor.');
         }
     }

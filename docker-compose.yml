@@ -63,13 +63,25 @@ services:
       DB_PASSWORD: "StbLaravel_2026!"
       DB_ENCRYPT: "no"
       DB_TRUST_SERVER_CERTIFICATE: "true"
+      RRHH_DB_HOST: "${RRHH_DB_HOST:-host.docker.internal}"
+      RRHH_DB_PORT: "${RRHH_DB_PORT:-1433}"
+      RRHH_DB_DATABASE: "${RRHH_DB_DATABASE:-db_rrhh_stb}"
+      RRHH_DB_USERNAME: "${RRHH_DB_USERNAME}"
+      RRHH_DB_PASSWORD: "${RRHH_DB_PASSWORD}"
+      RRHH_DB_ENCRYPT: "${RRHH_DB_ENCRYPT:-yes}"
+      RRHH_DB_TRUST_SERVER_CERTIFICATE: "${RRHH_DB_TRUST_SERVER_CERTIFICATE:-true}"
       SESSION_DRIVER: file
       CACHE_STORE: file
       QUEUE_CONNECTION: sync
       FILESYSTEM_DISK: local
-      MAIL_MAILER: log
-      MAIL_FROM_ADDRESS: capacitaciones@stb.local
-      MAIL_FROM_NAME: "Capacitaciones STB"
+      MAIL_MAILER: "${MAIL_MAILER:-smtp}"
+      MAIL_SCHEME: "${MAIL_SCHEME:-smtp}"
+      MAIL_HOST: "${MAIL_HOST:-host.docker.internal}"
+      MAIL_PORT: "${MAIL_PORT:-1025}"
+      MAIL_USERNAME: "${MAIL_USERNAME:-}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-}"
+      MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS:-capacitaciones@stb.local}"
+      MAIL_FROM_NAME: "${MAIL_FROM_NAME:-Capacitaciones STB}"
     volumes:
       - ./storage/app/public:/var/www/html/storage/app/public
       - ./storage/logs:/var/www/html/storage/logs

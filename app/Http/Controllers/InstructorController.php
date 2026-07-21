@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Empleado;
 use App\Models\Instructor;
+use App\Models\InstructorRrhh;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -11,9 +12,7 @@ class InstructorController extends Controller
 {
     public function index()
     {
-        $instructores = Instructor::with('empleado')
-            ->orderBy('id_instructor', 'desc')
-            ->get();
+        $instructores = InstructorRrhh::query()->get();
 
         return view('instructores.index', compact('instructores'));
     }

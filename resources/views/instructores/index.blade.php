@@ -2,63 +2,41 @@
     <x-slot name="header">
         <div>
             <p class="text-xs uppercase tracking-[0.18em] font-black text-slate-400 dark:text-slate-500">
-                Gestión de instructores
+                Recursos Humanos
             </p>
 
             <h2 class="mt-1 text-2xl font-black text-slate-900 dark:text-slate-100 leading-tight">
-                Instructores registrados
+                Instructores
             </h2>
 
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Consultá, edita y activa o inactiva los instructores disponibles para las capacitaciones.
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Datos consultados directamente de la tabla instructor de RR. HH.
             </p>
         </div>
     </x-slot>
 
     <div class="py-8">
-        <div class="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-
-            @if(session('success'))
-                <div class="esf-alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if($errors->any())
-                <div class="esf-alert-error">
-                    {{ $errors->first() }}
-                </div>
-            @endif
-
+        <div class="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="esf-page-card overflow-hidden">
                 <div class="p-6 sm:p-8 border-b border-slate-200/80 dark:border-slate-700/80">
-                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+                    <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p class="text-xs uppercase tracking-[0.18em] font-black text-slate-400 dark:text-slate-500">
-                                Lista administrativa
+                                Lista de instructores
                             </p>
 
                             <h3 class="mt-1 text-2xl font-black text-slate-900 dark:text-slate-100">
-                                Control de instructores
+                                Tabla instructor
                             </h3>
-
-                            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
-                                Esta tabla muestra los instructores creados, su información de contacto, tipo, estado y acciones disponibles.
-                            </p>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
-                            <input type="search"
-                                id="buscadorInstructoresSistema"
-                                autocomplete="off"
-                                placeholder="Buscar instructor..."
-                                class="w-full sm:w-72 rounded-full border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-300 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900/40">
-
-                            <a href="{{ route('instructores.create') }}"
-                               class="esf-btn esf-btn-primary">
-                                + Nuevo instructor
-                            </a>
-                        </div>
+                        <input
+                            type="search"
+                            id="buscadorInstructoresSistema"
+                            autocomplete="off"
+                            placeholder="Buscar instructor..."
+                            class="w-full sm:w-72 rounded-full border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-300 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900/40"
+                        >
                     </div>
                 </div>
 
@@ -66,137 +44,32 @@
                     <div class="esf-table-wrap">
                         <table class="esf-table">
                             <thead>
-                                <tr data-instructor-sistema-row>
-                                    <th>ID</th>
-                                    <th>Instructor</th>
-                                    <th>Correo</th>
-                                    <th>Teléfono</th>
-                                    <th>Tipo</th>
-                                    <th>Empleado vinculado</th>
-                                    <th>Estado</th>
-                                    <th class="text-center">Acciones</th>
+                                <tr>
+                                    <th>id_instructor</th>
+                                    <th>instructor</th>
+                                    <th>institucion</th>
                                 </tr>
                             </thead>
 
-                            <tbody>
+                            <tbody id="listaInstructoresSistema">
                                 @forelse($instructores as $instructor)
-                                    @php
-                                        $inicialesInstructor = collect(explode(' ', trim($instructor->instructor)))
-                                            ->filter()
-                                            ->take(2)
-                                            ->map(fn($parte) => mb_substr($parte, 0, 1))
-                                            ->implode('');
-
-                                        $tipoInstructor = (int) $instructor->interno === 1 ? 'Interno' : 'Externo';
-                                    @endphp
-
                                     <tr data-instructor-sistema-row>
-                                        <td>
-                                            <span class="font-black text-slate-700 dark:text-slate-200">
-                                                {{ $instructor->id_instructor }}
-                                            </span>
-                                        </td>
-
-                                        <td>
-                                            <div class="flex items-center gap-3">
-                                                <div class="esf-user-avatar">
-                                                    {{ $inicialesInstructor ?: 'IS' }}
-                                                </div>
-
-                                                <div>
-                                                    <p class="font-black text-slate-900 dark:text-slate-100">
-                                                        {{ $instructor->instructor }}
-                                                    </p>
-
-                                                    <p class="text-xs font-bold text-sky-600 dark:text-sky-300">
-                                                        Instructor
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        <td>
-                                            <span class="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                                                {{ $instructor->correo ?? 'Sin correo' }}
-                                            </span>
-                                        </td>
-
-                                        <td>
-                                            <span class="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                                                {{ $instructor->telefono ?? 'Sin teléfono' }}
-                                            </span>
-                                        </td>
-
-                                        <td>
-                                            <span class="esf-badge {{ (int) $instructor->interno === 1 ? 'esf-badge-blue' : 'esf-badge-slate' }}">
-                                                {{ $tipoInstructor }}
-                                            </span>
-                                        </td>
-
-                                        <td>
-                                            <span class="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                                                {{ $instructor->empleado?->nombre_completo ?? 'Sin vínculo' }}
-                                            </span>
-                                        </td>
-
-                                        <td>
-                                            @if((int) $instructor->estado === 1)
-                                                <span class="esf-badge esf-badge-green">
-                                                    Activo
-                                                </span>
-                                            @else
-                                                <span class="esf-badge esf-badge-red">
-                                                    Inactivo
-                                                </span>
-                                            @endif
-                                        </td>
-
-                                        <td>
-                                            <div class="flex flex-wrap justify-center gap-2">
-                                                <a href="{{ route('instructores.edit', $instructor->id_instructor) }}"
-                                                   class="esf-action-btn esf-action-edit">
-                                                    Editar
-                                                </a>
-
-                                                <form action="{{ route('instructores.toggleEstado', $instructor->id_instructor) }}"
-                                                      method="POST"
-                                                      onsubmit="return confirm('¿Seguro que quieres cambiar el estado de este instructor?');">
-                                                    @csrf
-                                                    @method('PATCH')
-
-                                                    <button type="submit"
-                                                            class="esf-action-btn {{ (int) $instructor->estado === 1 ? 'esf-action-status' : 'esf-action-restore' }}">
-                                                        {{ (int) $instructor->estado === 1 ? 'Inactivar' : 'Activar' }}
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
+                                        <td>{{ $instructor->id_instructor }}</td>
+                                        <td>{{ $instructor->instructor }}</td>
+                                        <td>{{ $instructor->institucion }}</td>
                                     </tr>
                                 @empty
-                                    <tr data-instructor-sistema-row>
-                                        <td colspan="8">
-                                            <div class="py-10 text-center">
-                                                <p class="text-lg font-black text-slate-800 dark:text-slate-100">
-                                                    No hay instructores registrados.
-                                                </p>
-
-                                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                                    Cuando creés instructores, aparecerán en esta tabla.
-                                                </p>
-                                            </div>
+                                    <tr>
+                                        <td colspan="3" class="py-10 text-center">
+                                            No hay registros en la tabla instructor.
                                         </td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
-
-                    <p class="mt-4 text-xs text-slate-400 dark:text-slate-500">
-                        Consejo: mantené activos únicamente los instructores que actualmente participan en las capacitaciones.
-                    </p>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -205,30 +78,17 @@
             const buscador = document.getElementById('buscadorInstructoresSistema');
             const filas = document.querySelectorAll('[data-instructor-sistema-row]');
 
-            if (!buscador || filas.length === 0) {
+            if (!buscador) {
                 return;
             }
 
-            function normalizarTexto(texto) {
-                return (texto || '')
-                    .toString()
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .toLowerCase()
-                    .trim();
-            }
-
-            function filtrarInstructores() {
-                const valor = normalizarTexto(buscador.value);
+            buscador.addEventListener('input', function () {
+                const valor = buscador.value.toLowerCase();
 
                 filas.forEach(function (fila) {
-                    const textoFila = normalizarTexto(fila.innerText);
-                    fila.style.display = textoFila.includes(valor) ? '' : 'none';
+                    fila.hidden = !fila.textContent.toLowerCase().includes(valor);
                 });
-            }
-
-            buscador.addEventListener('input', filtrarInstructores);
+            });
         });
     </script>
-
 </x-app-layout>

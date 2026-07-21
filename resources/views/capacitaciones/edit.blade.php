@@ -66,7 +66,37 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div
+                        class="grid grid-cols-1 gap-5 md:grid-cols-2"
+                        x-data="{ instructorRrhhId: '', instructorRrhhNombre: '' }"
+                        @autocomplete-selected="
+                            if ($event.detail.name === 'id_capacitacion_instructor') {
+                                instructorRrhhId = $event.detail.option?.id_instructor ?? '';
+                                instructorRrhhNombre = $event.detail.option?.instructor ?? '';
+                            }
+                        "
+                    >
+
+                        <div class="md:col-span-2">
+                            <label for="id_capacitacion_instructor" class="mb-2 block text-sm font-black text-slate-700 dark:text-slate-200">
+                                Capacitación equivalente de RR. HH.
+                            </label>
+
+                            <x-autocomplete-select
+                                name="id_capacitacion_instructor"
+                                :options="$capacitacionesRrhh"
+                                :selected="old('id_capacitacion_instructor', $capacitacion->id_capacitacion_instructor)"
+                                placeholder="Escriba la capacitación, instructor o ID"
+                            />
+
+                            @error('id_capacitacion_instructor')
+                                <p class="mt-1 text-sm font-bold text-red-500">{{ $message }}</p>
+                            @enderror
+
+                            <p class="mt-1 text-xs font-semibold text-slate-500">
+                                Se guardará el id_capacitacion_instructor de la opción seleccionada.
+                            </p>
+                        </div>
 
                         <div class="md:col-span-2">
                             <label class="mb-2 block text-sm font-black text-slate-700 dark:text-slate-200">
@@ -107,33 +137,16 @@
                                 Instructor
                             </label>
 
-                            @if($esAdminCapacitacion)
-                                <select name="id_instructor"
-                                        class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 @error('id_instructor') border-red-500 @enderror">
-                                    <option value="">Seleccione</option>
+                            <input type="hidden" name="id_instructor" :value="instructorRrhhId">
 
-                                    @foreach($instructores as $instructor)
-                                        <option value="{{ $instructor->id_instructor }}"
-                                                {{ old('id_instructor', $capacitacion->id_instructor) == $instructor->id_instructor ? 'selected' : '' }}>
-                                            {{ $instructor->instructor }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            @else
-                                <input type="hidden" name="id_instructor" value="">
+                            <div class="min-h-[46px] rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-black text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
+                                <span x-show="instructorRrhhId" x-text="'#' + instructorRrhhId + ' — ' + instructorRrhhNombre"></span>
+                                <span x-show="! instructorRrhhId" class="text-slate-500">Se completará al seleccionar la capacitación de RR. HH.</span>
+                            </div>
 
-                                <div class="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-black text-blue-800">
-                                    {{ $instructorActual?->instructor }}
-                                </div>
-
-                                <p class="mt-1 text-xs font-semibold text-slate-500">
-                                    Como instructor, no puedes cambiar el instructor asignado a esta capacitación.
-                                </p>
-                            @endif
-
-                            @error('id_instructor')
-                                <p class="mt-1 text-sm font-bold text-red-500">{{ $message }}</p>
-                            @enderror
+                            <p class="mt-1 text-xs font-semibold text-slate-500">
+                                Se guardará automáticamente el id_instructor de capacitacion_instructor.
+                            </p>
                         </div>
 
                         <div class="md:col-span-2">

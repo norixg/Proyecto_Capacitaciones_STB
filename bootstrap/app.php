@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function ($middleware) {
         $middleware->alias([
             'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+            'password.changed' => \App\Http\Middleware\EnsurePasswordWasChanged::class,
             'rol' => \App\Http\Middleware\RolMiddleware::class,
             'capacitacion.instructor' => \App\Http\Middleware\AutorizaCapacitacionInstructor::class,
 

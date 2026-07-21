@@ -3,15 +3,55 @@
 namespace App\Http\Controllers;
 
 use App\Models\Capacitacion;
-use App\Models\Instructor;
+use App\Models\CapacitacionInstructorRrhh;
+use App\Models\InstructorRrhh;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Services\EliminacionCapacitacionService;
 use App\Models\User;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CapacitacionController extends Controller
 {
+    private function capacitacionesRrhh(?int $idInstructor = null): Collection
+    {
+        $query = CapacitacionInstructorRrhh::query()
+            ->from('capacitacion_instructor as ci')
+            ->leftJoin('capacitacion as c', 'c.id_capacitacion', '=', 'ci.id_capacitacion')
+            ->leftJoin('instructor as i', 'i.id_instructor', '=', 'ci.id_instructor')
+            ->whereNotNull('ci.id_instructor');
+
+        if ($idInstructor) {
+            $query->where('ci.id_instructor', $idInstructor);
+        }
+
+        return $query
+            ->orderBy('c.capacitacion')
+            ->orderBy('ci.id_capacitacion_instructor')
+            ->get([
+                'ci.id_capacitacion_instructor',
+                'ci.id_instructor',
+                'c.capacitacion',
+                'i.instructor',
+            ])
+            ->map(function ($registro) {
+                $etiqueta = '#'.$registro->id_capacitacion_instructor
+                    .' — '.$registro->capacitacion
+                    .($registro->instructor ? ' — '.$registro->instructor : '');
+
+                return [
+                    'id' => $registro->id_capacitacion_instructor,
+                    'etiqueta' => $etiqueta,
+                    'busqueda' => Str::of($etiqueta)->ascii()->lower()->toString(),
+                    'id_instructor' => (int) $registro->id_instructor,
+                    'instructor' => $registro->instructor,
+                ];
+            });
+    }
+
     private function usuarioEsAdmin(): bool
     {
         $usuario = Auth::user();
@@ -23,7 +63,7 @@ class CapacitacionController extends Controller
         return $usuario->esAdminSistema();
     }
 
-    private function instructorActual(): ?Instructor
+    private function instructorActual(): ?InstructorRrhh
     {
         if ($this->usuarioEsAdmin()) {
             return null;
@@ -35,7 +75,7 @@ class CapacitacionController extends Controller
             return null;
         }
 
-        return $usuario->instructorInternoActual();
+        return $usuario->instructorRrhhActual();
     }
 
     private function consultaCapacitacionesAutorizadas()
@@ -49,18 +89,10 @@ class CapacitacionController extends Controller
         $instructor = $this->instructorActual();
 
         if (!$instructor) {
-            abort(403, 'Tu usuario instructor debe estar vinculado a un empleado interno y a un registro de instructor activo.');
+            abort(403, 'Tu usuario debe estar vinculado a un instructor de Recursos Humanos.');
         }
 
-        $idUsuario = Auth::id();
-
-        return $query->where(function ($subQuery) use ($instructor, $idUsuario) {
-            $subQuery->where('id_instructor', $instructor->id_instructor);
-
-            if ($idUsuario) {
-                $subQuery->orWhere('created_by', $idUsuario);
-            }
-        });
+        return $query->where('id_instructor', $instructor->id_instructor);
     }
 
     private function validarAccesoCapacitacion(Capacitacion $capacitacion): void
@@ -71,15 +103,10 @@ class CapacitacionController extends Controller
 
         $instructor = $this->instructorActual();
 
-        $idUsuario = Auth::id();
-
         $perteneceAlInstructor = $instructor
             && (int) $capacitacion->id_instructor === (int) $instructor->id_instructor;
 
-        $fueCreadaPorInstructor = $idUsuario
-            && (int) $capacitacion->created_by === (int) $idUsuario;
-
-        if (!$perteneceAlInstructor && !$fueCreadaPorInstructor) {
+        if (!$perteneceAlInstructor) {
             abort(403, 'Solo puedes gestionar tus capacitaciones como instructor.');
         }
     }
@@ -118,17 +145,13 @@ class CapacitacionController extends Controller
         $instructorActual = $this->instructorActual();
 
         if (!$esAdminCapacitacion && !$instructorActual) {
-            abort(403, 'Tu usuario instructor debe estar vinculado a un empleado interno y a un registro de instructor activo.');
+            abort(403, 'Tu usuario debe estar vinculado a un instructor de Recursos Humanos.');
         }
 
-        $instructores = $esAdminCapacitacion
-            ? Instructor::where('estado', 1)->orderBy('instructor')->get()
-            : collect([$instructorActual]);
+        $capacitacionesRrhh = $this->capacitacionesRrhh($instructorActual?->id_instructor);
 
         return view('capacitaciones.create', compact(
-            'instructores',
-            'esAdminCapacitacion',
-            'instructorActual'
+            'capacitacionesRrhh'
         ));
     }
 
@@ -138,7 +161,7 @@ class CapacitacionController extends Controller
         $instructorActual = $this->instructorActual();
 
         if (!$esAdminCapacitacion && !$instructorActual) {
-            abort(403, 'Tu usuario instructor debe estar vinculado a un empleado interno y a un registro de instructor activo.');
+            abort(403, 'Tu usuario debe estar vinculado a un instructor de Recursos Humanos.');
         }
 
         $request->merge([
@@ -163,11 +186,19 @@ class CapacitacionController extends Controller
             'dias_vigencia' => ['nullable', 'integer', 'min:1'],
             'obligatoria' => ['required', 'in:0,1'],
             'estado' => ['required', 'in:0,1'],
-        ];
+            'id_capacitacion_instructor' => [
+                'required',
+                'integer',
+                Rule::exists('rrhh.capacitacion_instructor', 'id_capacitacion_instructor')
+                    ->where(function ($query) use ($esAdminCapacitacion, $instructorActual) {
+                        $query->whereNotNull('id_instructor');
 
-        if ($esAdminCapacitacion) {
-            $reglas['id_instructor'] = ['nullable', 'exists:instructor,id_instructor'];
-        }
+                        if (!$esAdminCapacitacion) {
+                            $query->where('id_instructor', $instructorActual->id_instructor);
+                        }
+                    }),
+            ],
+        ];
 
         $request->validate($reglas, [
             'capacitacion.not_regex' => 'El nombre de la capacitación no puede ser solo números.',
@@ -179,9 +210,13 @@ class CapacitacionController extends Controller
             $rutaPortada = $request->file('portada')->store('capacitaciones/portadas', 'public');
         }
 
-        $idInstructor = $esAdminCapacitacion
-            ? ($request->id_instructor ?: null)
-            : $instructorActual->id_instructor;
+        $capacitacionInstructorRrhh = CapacitacionInstructorRrhh::query()
+            ->findOrFail($request->id_capacitacion_instructor);
+
+        if (!$esAdminCapacitacion && (int) $capacitacionInstructorRrhh->id_instructor !== (int) $instructorActual->id_instructor) {
+            abort(403, 'La relación de capacitación seleccionada no pertenece a tu instructor de Recursos Humanos.');
+        }
+        $idInstructor = $capacitacionInstructorRrhh->id_instructor;
 
         Capacitacion::create([
             'capacitacion' => $request->capacitacion,
@@ -197,6 +232,7 @@ class CapacitacionController extends Controller
             'estado' => $request->estado,
             'created_by' => Auth::id(),
             'id_instructor' => $idInstructor,
+            'id_capacitacion_instructor' => $request->id_capacitacion_instructor,
         ]);
 
         return redirect()->route('capacitaciones.index')
@@ -212,15 +248,11 @@ class CapacitacionController extends Controller
         $esAdminCapacitacion = $this->usuarioEsAdmin();
         $instructorActual = $this->instructorActual();
 
-        $instructores = $esAdminCapacitacion
-            ? Instructor::where('estado', 1)->orderBy('instructor')->get()
-            : collect([$instructorActual]);
+        $capacitacionesRrhh = $this->capacitacionesRrhh($instructorActual?->id_instructor);
 
         return view('capacitaciones.edit', compact(
             'capacitacion',
-            'instructores',
-            'esAdminCapacitacion',
-            'instructorActual'
+            'capacitacionesRrhh'
         ));
     }
 
@@ -255,13 +287,28 @@ class CapacitacionController extends Controller
             'dias_vigencia' => ['nullable', 'integer', 'min:1'],
             'obligatoria' => ['required', 'in:0,1'],
             'estado' => ['required', 'in:0,1'],
+            'id_capacitacion_instructor' => [
+                'required',
+                'integer',
+                Rule::exists('rrhh.capacitacion_instructor', 'id_capacitacion_instructor')
+                    ->where(function ($query) use ($esAdminCapacitacion, $instructorActual) {
+                        $query->whereNotNull('id_instructor');
+
+                        if (!$esAdminCapacitacion) {
+                            $query->where('id_instructor', $instructorActual->id_instructor);
+                        }
+                    }),
+            ],
         ];
 
-        if ($esAdminCapacitacion) {
-            $reglas['id_instructor'] = ['nullable', 'exists:instructor,id_instructor'];
-        }
-
         $request->validate($reglas);
+
+        $capacitacionInstructorRrhh = CapacitacionInstructorRrhh::query()
+            ->findOrFail($request->id_capacitacion_instructor);
+
+        if (!$esAdminCapacitacion && (int) $capacitacionInstructorRrhh->id_instructor !== (int) $instructorActual->id_instructor) {
+            abort(403, 'La relación de capacitación seleccionada no pertenece a tu instructor de Recursos Humanos.');
+        }
 
         $datosCapacitacion = [
             'capacitacion' => $request->capacitacion,
@@ -274,9 +321,8 @@ class CapacitacionController extends Controller
             'obligatoria' => $request->obligatoria,
             'permite_autogestion' => 0,
             'estado' => $request->estado,
-            'id_instructor' => $esAdminCapacitacion
-                ? ($request->id_instructor ?: null)
-                : $instructorActual->id_instructor,
+            'id_instructor' => $capacitacionInstructorRrhh->id_instructor,
+            'id_capacitacion_instructor' => $request->id_capacitacion_instructor,
         ];
 
         if ($request->hasFile('portada')) {

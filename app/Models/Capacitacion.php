@@ -30,6 +30,7 @@ class Capacitacion extends Model
         'estado',
         'created_by',
         'id_instructor',
+        'id_capacitacion_instructor',
         'created_at',
         'updated_at',
     ];
@@ -44,13 +45,14 @@ class Capacitacion extends Model
         'estado' => 'integer',
         'created_by' => 'integer',
         'id_instructor' => 'integer',
+        'id_capacitacion_instructor' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
     public function instructor()
     {
-        return $this->belongsTo(Instructor::class, 'id_instructor', 'id_instructor');
+        return $this->belongsTo(InstructorRrhh::class, 'id_instructor', 'id_instructor');
     }
 
     public function creador()

@@ -103,6 +103,8 @@ IF OBJECT_ID(N'dbo.capacitacion_area', N'U') IS NOT NULL DROP TABLE dbo.capacita
 GO
 IF OBJECT_ID(N'dbo.capacitacion', N'U') IS NOT NULL DROP TABLE dbo.capacitacion
 GO
+IF OBJECT_ID(N'dbo.instructor_user', N'U') IS NOT NULL DROP TABLE dbo.instructor_user
+GO
 IF OBJECT_ID(N'dbo.instructor', N'U') IS NOT NULL DROP TABLE dbo.instructor
 GO
 IF OBJECT_ID(N'dbo.empleado_user', N'U') IS NOT NULL DROP TABLE dbo.empleado_user
@@ -192,10 +194,12 @@ GO
 CREATE TABLE [dbo].[users](
     [id] [bigint] IDENTITY(1,1) NOT NULL,
     [name] [nvarchar](255) NOT NULL,
+    [username] [nvarchar](50) NOT NULL,
     [email] [nvarchar](255) NOT NULL,
     [email_verified_at] [datetime] NULL,
     [password] [nvarchar](255) NOT NULL,
-    [password_temporal_notificacion] [nvarchar](max) NULL,
+    [debe_cambiar_password] [bit] NOT NULL,
+    [password_temporal_expira_en] [datetime] NULL,
     [remember_token] [nvarchar](100) NULL,
     [created_at] [datetime] NULL,
     [updated_at] [datetime] NULL,
@@ -345,6 +349,19 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+CREATE TABLE [dbo].[instructor_user](
+    [id_instructor_user] [bigint] IDENTITY(1,1) NOT NULL,
+    [id_user] [bigint] NOT NULL,
+    [id_instructor] [int] NOT NULL,
+    [fecha_asignacion] [datetime] NOT NULL,
+    CONSTRAINT [PK_instructor_user_id_instructor_user] PRIMARY KEY CLUSTERED ([id_instructor_user] ASC)
+) ON [PRIMARY]
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[instructor](
     [id_instructor] [int] IDENTITY(1,1) NOT NULL,
     [instructor] [nvarchar](150) NOT NULL,
@@ -379,6 +396,7 @@ CREATE TABLE [dbo].[capacitacion](
     [estado] [int] NOT NULL,
     [created_by] [bigint] NULL,
 	[id_instructor] [int] NULL,
+    [id_capacitacion_instructor] [int] NULL,
     [created_at] [datetime] NULL,
     [updated_at] [datetime] NULL,
     CONSTRAINT [PK_capacitacion_id_capacitacion] PRIMARY KEY CLUSTERED ([id_capacitacion] ASC)
@@ -828,6 +846,8 @@ ALTER TABLE [dbo].[empleado] ADD CONSTRAINT [DF_empleado_estado] DEFAULT ((1)) F
 GO
 ALTER TABLE [dbo].[users] ADD CONSTRAINT [DF_users_estado] DEFAULT ((1)) FOR [estado]
 GO
+ALTER TABLE [dbo].[users] ADD CONSTRAINT [DF_users_debe_cambiar_password] DEFAULT ((0)) FOR [debe_cambiar_password]
+GO
 ALTER TABLE [dbo].[rol] ADD CONSTRAINT [DF_rol_estado] DEFAULT ((1)) FOR [estado]
 GO
 ALTER TABLE [dbo].[user_rol] ADD CONSTRAINT [DF_user_rol_fecha_asignacion] DEFAULT (GETDATE()) FOR [fecha_asignacion]
@@ -912,8 +932,12 @@ ALTER TABLE [dbo].[aviso_correo] ADD CONSTRAINT [DF_aviso_correo_intentos] DEFAU
 GO
 ALTER TABLE [dbo].[historial_capacitacion_empleado] ADD CONSTRAINT [DF_historial_capacitacion_empleado_fecha] DEFAULT (GETDATE()) FOR [fecha_movimiento]
 GO
+ALTER TABLE [dbo].[instructor_user] ADD CONSTRAINT [DF_instructor_user_fecha_asignacion] DEFAULT (GETDATE()) FOR [fecha_asignacion]
+GO
 
 ALTER TABLE [dbo].[users] ADD CONSTRAINT [UQ_users_email] UNIQUE ([email])
+GO
+ALTER TABLE [dbo].[users] ADD CONSTRAINT [UQ_users_username] UNIQUE ([username])
 GO
 ALTER TABLE [dbo].[rol] ADD CONSTRAINT [UQ_rol_rol] UNIQUE ([rol])
 GO
@@ -922,6 +946,10 @@ GO
 ALTER TABLE [dbo].[empleado_user] ADD CONSTRAINT [UQ_empleado_user_empleado] UNIQUE ([id_empleado])
 GO
 ALTER TABLE [dbo].[empleado_user] ADD CONSTRAINT [UQ_empleado_user_user] UNIQUE ([id_user])
+GO
+ALTER TABLE [dbo].[instructor_user] ADD CONSTRAINT [UQ_instructor_user_user] UNIQUE ([id_user])
+GO
+ALTER TABLE [dbo].[instructor_user] ADD CONSTRAINT [UQ_instructor_user_instructor] UNIQUE ([id_instructor])
 GO
 ALTER TABLE [dbo].[capacitacion] ADD CONSTRAINT [UQ_capacitacion_codigo] UNIQUE ([codigo])
 GO
@@ -991,17 +1019,14 @@ GO
 ALTER TABLE [dbo].[user_rol]  WITH CHECK ADD CONSTRAINT [FK_user_rol_rol]
 FOREIGN KEY([id_rol]) REFERENCES [dbo].[rol] ([id_rol])
 GO
-ALTER TABLE [dbo].[empleado_user]  WITH CHECK ADD CONSTRAINT [FK_empleado_user_empleado]
-FOREIGN KEY([id_empleado]) REFERENCES [dbo].[empleado] ([id_empleado]) ON DELETE CASCADE
-GO
 ALTER TABLE [dbo].[empleado_user]  WITH CHECK ADD CONSTRAINT [FK_empleado_user_users]
+FOREIGN KEY([id_user]) REFERENCES [dbo].[users] ([id]) ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[instructor_user]  WITH CHECK ADD CONSTRAINT [FK_instructor_user_users]
 FOREIGN KEY([id_user]) REFERENCES [dbo].[users] ([id]) ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[capacitacion]  WITH CHECK ADD CONSTRAINT [FK_capacitacion_users_created_by]
 FOREIGN KEY([created_by]) REFERENCES [dbo].[users] ([id])
-GO
-ALTER TABLE [dbo].[capacitacion]  WITH CHECK ADD CONSTRAINT [FK_capacitacion_instructor]
-FOREIGN KEY([id_instructor]) REFERENCES [dbo].[instructor] ([id_instructor])
 GO
 ALTER TABLE [dbo].[instructor]  WITH CHECK ADD CONSTRAINT [FK_instructor_empleado]
 FOREIGN KEY([id_empleado]) REFERENCES [dbo].[empleado] ([id_empleado])
@@ -1055,9 +1080,6 @@ FOREIGN KEY([id_empleado]) REFERENCES [dbo].[empleado] ([id_empleado]) ON DELETE
 GO
 ALTER TABLE [dbo].[empleados_capacitacion]  WITH CHECK ADD CONSTRAINT [FK_empleados_capacitacion_capacitacion]
 FOREIGN KEY([id_capacitacion]) REFERENCES [dbo].[capacitacion] ([id_capacitacion]) ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[empleado_capacitacion]  WITH CHECK ADD CONSTRAINT [FK_empleado_capacitacion_empleado]
-FOREIGN KEY([id_empleado]) REFERENCES [dbo].[empleado] ([id_empleado]) ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[empleado_capacitacion]  WITH CHECK ADD CONSTRAINT [FK_empleado_capacitacion_capacitacion]
 FOREIGN KEY([id_capacitacion]) REFERENCES [dbo].[capacitacion] ([id_capacitacion])

@@ -36,10 +36,10 @@ class AutorizaCapacitacionInstructor
             abort(403, 'No tienes permiso para acceder a esta sección.');
         }
 
-        $instructor = $usuario->instructorInternoActual();
+        $instructor = $usuario->instructorRrhhActual();
 
         if (!$instructor) {
-            abort(403, 'Tu usuario instructor debe estar vinculado a un empleado interno y a un registro de instructor activo.');
+            abort(403, 'Tu usuario debe estar vinculado a un instructor de Recursos Humanos.');
         }
 
         $idCapacitacion = $this->resolverIdCapacitacion($request);
@@ -48,16 +48,8 @@ class AutorizaCapacitacionInstructor
             return $next($request);
         }
 
-        $idUsuario = Auth::id();
-
         $puedeAcceder = Capacitacion::where('id_capacitacion', $idCapacitacion)
-            ->where(function ($query) use ($instructor, $idUsuario) {
-                $query->where('id_instructor', $instructor->id_instructor);
-
-                if ($idUsuario) {
-                    $query->orWhere('created_by', $idUsuario);
-                }
-            })
+            ->where('id_instructor', $instructor->id_instructor)
             ->exists();
 
         if (!$puedeAcceder) {

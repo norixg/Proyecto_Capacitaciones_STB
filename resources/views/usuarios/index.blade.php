@@ -72,6 +72,7 @@
                                     <th>Correo</th>
                                     <th>Rol</th>
                                     <th>Empleado vinculado</th>
+                                    <th>Instructor vinculado</th>
                                     <th>Estado</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
@@ -84,6 +85,7 @@
                                         $esAdmin = $usuario->rolesSistema->first()?->rol === 'admin';
                                         $rolUsuario = $usuario->rolesSistema->first()?->rol ?? 'Sin rol';
                                         $empleadoVinculado = $usuario->empleadoUser?->empleado?->nombre_completo ?? 'Sin vínculo';
+                                        $instructorVinculado = $usuario->instructorUser?->instructor?->instructor ?? 'Sin vínculo';
                                         $inicialesUsuario = collect(explode(' ', trim($usuario->name)))
                                             ->filter()
                                             ->take(2)
@@ -107,6 +109,10 @@
                                                 <div>
                                                     <p class="font-black text-slate-900 dark:text-slate-100">
                                                         {{ $usuario->name }}
+                                                    </p>
+
+                                                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                                        {{ '@'.$usuario->username }}
                                                     </p>
 
                                                     @if($esMismoUsuario)
@@ -137,6 +143,12 @@
                                         </td>
 
                                         <td>
+                                            <span class="{{ $instructorVinculado === 'Sin vínculo' ? 'text-slate-400 dark:text-slate-500' : 'font-semibold text-slate-700 dark:text-slate-200' }}">
+                                                {{ $instructorVinculado }}
+                                            </span>
+                                        </td>
+
+                                        <td>
                                             @if($usuario->estado == 1)
                                                 <span class="esf-badge esf-badge-green">
                                                     Activo
@@ -144,6 +156,12 @@
                                             @else
                                                 <span class="esf-badge esf-badge-red">
                                                     Inactivo
+                                                </span>
+                                            @endif
+
+                                            @if($usuario->debeCambiarPassword())
+                                                <span class="esf-badge {{ $usuario->passwordTemporalExpirada() ? 'esf-badge-red' : 'esf-badge-purple' }} mt-1">
+                                                    {{ $usuario->passwordTemporalExpirada() ? 'Clave temporal vencida' : 'Cambio de clave pendiente' }}
                                                 </span>
                                             @endif
                                         </td>
@@ -155,7 +173,20 @@
                                                     Editar
                                                 </a>
 
+                                                @if(!$esMismoUsuario && $usuario->estado == 1)
+                                                    <form action="{{ route('usuarios.generar_password_temporal', $usuario->id) }}"
+                                                          method="POST"
+                                                          onsubmit="return confirm('Se invalidará inmediatamente la contraseña actual y se enviará una nueva contraseña temporal por correo. ¿Deseas continuar?');">
+                                                        @csrf
+
+                                                        <button type="submit" class="esf-action-btn esf-action-edit">
+                                                            Enviar nueva contraseña
+                                                        </button>
+                                                    </form>
+                                                @endif
+
                                                 @if(!$esMismoUsuario && !$esAdmin)
+
                                                     <form action="{{ route('usuarios.toggleEstado', $usuario->id) }}"
                                                           method="POST"
                                                           onsubmit="return confirm('¿Seguro que quieres cambiar el estado de este usuario?');">
@@ -193,7 +224,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7">
+                                        <td colspan="8">
                                             <div class="py-10 text-center">
                                                 <p class="text-lg font-black text-slate-800 dark:text-slate-100">
                                                     No hay usuarios registrados.
@@ -208,7 +239,7 @@
                                 @endforelse
 
                                 <tr id="sinResultadosUsuariosSistema" class="hidden">
-                                    <td colspan="7">
+                                    <td colspan="8">
                                         <div class="py-10 text-center">
                                             <p class="text-lg font-black text-slate-800 dark:text-slate-100">
                                                 No se encontraron usuarios con ese criterio de búsqueda.
@@ -254,7 +285,7 @@
                 let visibles = 0;
 
                 filas.forEach(function (fila) {
-                    const celdas = Array.from(fila.querySelectorAll('td')).slice(0, 6);
+                    const celdas = Array.from(fila.querySelectorAll('td')).slice(0, 7);
                     const textoFila = normalizarTexto(celdas.map(function (celda) {
                         return celda.textContent;
                     }).join(' '));

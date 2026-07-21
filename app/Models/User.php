@@ -14,9 +14,9 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use App\Models\EmpleadoUser;
 use Spatie\Permission\Traits\HasRoles;
-use App\Models\Instructor;
+use App\Models\InstructorRrhh;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'username', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -27,9 +27,9 @@ class User extends Authenticatable
     protected $primaryKey = 'id';
     public $timestamps = false; //mientras...
 
-    protected ?Instructor $instructorInternoActualCache = null;
+    protected ?InstructorRrhh $instructorRrhhActualCache = null;
 
-    protected bool $instructorInternoActualConsultado = false;
+    protected bool $instructorRrhhActualConsultado = false;
 
     /**
      * Get the attributes that should be cast.
@@ -60,9 +60,11 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
-        'password_temporal_notificacion',
+        'debe_cambiar_password',
+        'password_temporal_expira_en',
         'email_verified_at',
         'remember_token',
         'estado',
@@ -70,7 +72,6 @@ class User extends Authenticatable
 
     protected $hidden = [
         'password',
-        'password_temporal_notificacion',
         'remember_token',
     ];
 
@@ -81,7 +82,21 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'estado' => 'integer',
+            'debe_cambiar_password' => 'integer',
+            'password_temporal_expira_en' => 'datetime',
         ];
+    }
+
+    public function debeCambiarPassword(): bool
+    {
+        return (int) $this->debe_cambiar_password === 1;
+    }
+
+    public function passwordTemporalExpirada(): bool
+    {
+        return $this->debeCambiarPassword()
+            && $this->password_temporal_expira_en
+            && $this->password_temporal_expira_en->isPast();
     }
 
     public function capacitacionesCreadas()
@@ -107,6 +122,11 @@ class User extends Authenticatable
     public function empleadoUser()
     {
         return $this->hasOne(EmpleadoUser::class, 'id_user', 'id');
+    }
+
+    public function instructorUser()
+    {
+        return $this->hasOne(InstructorUser::class, 'id_user', 'id');
     }
 
     public function rolesSistema()
@@ -166,29 +186,29 @@ class User extends Authenticatable
         return $this->tieneRolSistema('instructor');
     }
 
-    public function instructorInternoActual(): ?Instructor
+    public function instructorRrhhActual(): ?InstructorRrhh
     {
-        if ($this->instructorInternoActualConsultado) {
-            return $this->instructorInternoActualCache;
+        if ($this->instructorRrhhActualConsultado) {
+            return $this->instructorRrhhActualCache;
         }
 
-        $this->instructorInternoActualConsultado = true;
+        $this->instructorRrhhActualConsultado = true;
 
-        $this->loadMissing('empleadoUser');
+        $this->loadMissing('instructorUser');
 
-        $idEmpleado = $this->empleadoUser?->id_empleado;
+        $idInstructor = $this->instructorUser?->id_instructor;
 
-        if (!$idEmpleado) {
-            $this->instructorInternoActualCache = null;
+        if (!$idInstructor) {
+            $this->instructorRrhhActualCache = null;
 
             return null;
         }
 
-        $this->instructorInternoActualCache = Instructor::query()
-            ->where('id_empleado', $idEmpleado)
-            ->where('tipo', 'interno')
+        $this->instructorRrhhActualCache = InstructorRrhh::query()
+            ->where('id_instructor', $idInstructor)
             ->first();
 
-        return $this->instructorInternoActualCache;
+        return $this->instructorRrhhActualCache;
     }
+
 }

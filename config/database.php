@@ -114,6 +114,26 @@ return [
             'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'true'),
         ],
 
+        /*
+         * Conexión de solo lectura al sistema de Recursos Humanos.
+         * Use un usuario de SQL Server con permiso SELECT únicamente sobre
+         * dbo.empleado, dbo.instructor, dbo.capacitacion y
+         * dbo.capacitacion_instructor. Mantenga sus credenciales en .env.
+         */
+        'rrhh' => [
+            'driver' => 'sqlsrv',
+            'host' => env('RRHH_DB_HOST', 'localhost'),
+            'port' => env('RRHH_DB_PORT', '1433'),
+            'database' => env('RRHH_DB_DATABASE', 'db_rrhh_stb'),
+            'username' => env('RRHH_DB_USERNAME'),
+            'password' => env('RRHH_DB_PASSWORD'),
+            'charset' => env('RRHH_DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'encrypt' => env('RRHH_DB_ENCRYPT', 'yes'),
+            'trust_server_certificate' => env('RRHH_DB_TRUST_SERVER_CERTIFICATE', 'false'),
+        ],
+
     ],
 
     /*

@@ -56,13 +56,29 @@
                     </h3>
 
                     <p class="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
-                        Modifica únicamente la información necesaria. La contraseña puede quedar vacía si no quieres cambiarla.
+                        Modifica únicamente la información necesaria. Las contraseñas temporales se administran desde el listado de usuarios.
                     </p>
                 </div>
 
+                @php
+                    $rolSeleccionado = old('id_rol', $usuario->rolesSistema->first()?->id_rol);
+                    $idRolInstructor = (string) ($roles->first(fn ($rol) => strtolower((string) $rol->rol) === 'instructor')?->id_rol ?? '');
+                    $opcionesInstructores = $instructores->map(function ($instructor) {
+                        $etiqueta = $instructor->instructor
+                            . ($instructor->institucion ? ' — '.$instructor->institucion : '');
+
+                        return [
+                            'id' => $instructor->id_instructor,
+                            'etiqueta' => $etiqueta,
+                            'busqueda' => \Illuminate\Support\Str::of($etiqueta)->ascii()->lower()->toString(),
+                        ];
+                    })->values();
+                @endphp
+
                 <form method="POST"
                       action="{{ route('usuarios.update', $usuario->id) }}"
-                      class="px-6 py-6">
+                      class="px-6 py-6"
+                      x-data="{ rolSeleccionado: @js((string) $rolSeleccionado) }">
                     @csrf
                     @method('PUT')
 
@@ -99,30 +115,18 @@
 
                         <div>
                             <label class="mb-2 block text-sm font-black text-slate-700 dark:text-slate-200">
-                                Nueva contraseña
+                                Usuario
                             </label>
 
-                            <input type="password"
-                                   name="password"
-                                   class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 @error('password') border-red-500 @enderror">
+                            <input type="text"
+                                   name="username"
+                                   value="{{ old('username', $usuario->username) }}"
+                                   autocomplete="off"
+                                   class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 @error('username') border-red-500 @enderror">
 
-                            <p class="mt-1 text-xs font-semibold text-slate-500">
-                                Dejá este campo vacío si no quieres cambiar la contraseña.
-                            </p>
-
-                            @error('password')
+                            @error('username')
                                 <p class="mt-1 text-sm font-bold text-red-500">{{ $message }}</p>
                             @enderror
-                        </div>
-
-                        <div>
-                            <label class="mb-2 block text-sm font-black text-slate-700 dark:text-slate-200">
-                                Confirmar nueva contraseña
-                            </label>
-
-                            <input type="password"
-                                   name="password_confirmation"
-                                   class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
                         </div>
 
                         <div>
@@ -130,11 +134,8 @@
                                 Rol
                             </label>
 
-                            @php
-                                $rolSeleccionado = old('id_rol', $usuario->rolesSistema->first()?->id_rol);
-                            @endphp
-
                             <select name="id_rol"
+                                    x-model="rolSeleccionado"
                                     class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 @error('id_rol') border-red-500 @enderror {{ $esPropioUsuario ? 'bg-slate-100 cursor-not-allowed' : '' }}"
                                     {{ $esPropioUsuario ? 'disabled' : '' }}>
                                 <option value="">Seleccione</option>
@@ -155,6 +156,27 @@
                             @endif
 
                             @error('id_rol')
+                                <p class="mt-1 text-sm font-bold text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div x-cloak x-show="rolSeleccionado === @js($idRolInstructor)">
+                            <label class="mb-2 block text-sm font-black text-slate-700 dark:text-slate-200">
+                                Instructor vinculado de RR. HH.
+                            </label>
+
+                            <x-autocomplete-select
+                                name="id_instructor"
+                                :options="$opcionesInstructores"
+                                :selected="old('id_instructor', $usuario->instructorUser?->id_instructor)"
+                                placeholder="Escriba el nombre o institución del instructor"
+                            />
+
+                            <p class="mt-1 text-xs font-semibold text-slate-500">
+                                Este vínculo determina las capacitaciones y seguimientos que puede administrar.
+                            </p>
+
+                            @error('id_instructor')
                                 <p class="mt-1 text-sm font-bold text-red-500">{{ $message }}</p>
                             @enderror
                         </div>

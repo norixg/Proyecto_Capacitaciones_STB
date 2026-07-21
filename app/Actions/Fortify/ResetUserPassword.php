@@ -24,6 +24,8 @@ class ResetUserPassword implements ResetsUserPasswords
 
         $user->forceFill([
             'password' => $input['password'],
+            'debe_cambiar_password' => 0,
+            'password_temporal_expira_en' => null,
         ])->save();
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Capacitacion;
-use App\Models\Empleado;
+use App\Models\EmpleadoRrhh;
 use App\Models\EmpleadoCapacitacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +11,7 @@ use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use App\Services\AvisoCorreoService;
 use App\Services\EliminacionCapacitacionService;
+use Illuminate\Support\Str;
 
 
 class EmpleadoCapacitacionController extends Controller
@@ -24,22 +25,45 @@ class EmpleadoCapacitacionController extends Controller
         'cancelada',
     ];
 
+    private function opcionesCapacitaciones($capacitaciones)
+    {
+        return $capacitaciones->map(function (Capacitacion $capacitacion) {
+            $etiqueta = '#'.$capacitacion->id_capacitacion.' — '.$capacitacion->capacitacion;
+
+            if ($capacitacion->id_capacitacion_instructor) {
+                $etiqueta .= ' — RR. HH. #'.$capacitacion->id_capacitacion_instructor;
+            }
+
+            return [
+                'id' => $capacitacion->id_capacitacion,
+                'etiqueta' => $etiqueta,
+                'busqueda' => Str::of($etiqueta)->ascii()->lower()->toString(),
+            ];
+        })->values();
+    }
+
     public function index(Request $request)
     {
         $buscar = trim((string) $request->query('buscar', ''));
         $estado = $request->query('estado');
         $obligatoria = $request->query('obligatoria');
 
+        $idsEmpleadosCoincidentes = $buscar !== ''
+            ? EmpleadoRrhh::query()
+                ->where('nombre_completo', 'like', '%' . $buscar . '%')
+                ->orWhere('codigo_empleado', 'like', '%' . $buscar . '%')
+                ->pluck('id_empleado')
+            : collect();
+
         $asignaciones = EmpleadoCapacitacion::with(['empleado', 'capacitacion', 'usuarioAsigno'])
-            ->when($buscar !== '', function ($query) use ($buscar) {
-                $query->where(function ($subQuery) use ($buscar) {
-                    $subQuery->whereHas('empleado', function ($empleadoQuery) use ($buscar) {
-                        $empleadoQuery->where('nombre_completo', 'like', '%' . $buscar . '%')
-                            ->orWhere('codigo_empleado', 'like', '%' . $buscar . '%');
-                    })->orWhereHas('capacitacion', function ($capacitacionQuery) use ($buscar) {
-                        $capacitacionQuery->where('capacitacion', 'like', '%' . $buscar . '%')
-                            ->orWhere('codigo', 'like', '%' . $buscar . '%');
-                    });
+            ->when($buscar !== '', function ($query) use ($buscar, $idsEmpleadosCoincidentes) {
+                // La capacitación permanece en la base local.
+                $query->where(function ($subQuery) use ($buscar, $idsEmpleadosCoincidentes) {
+                    $subQuery->whereIn('id_empleado', $idsEmpleadosCoincidentes)
+                        ->orWhereHas('capacitacion', function ($capacitacionQuery) use ($buscar) {
+                            $capacitacionQuery->where('capacitacion', 'like', '%' . $buscar . '%')
+                                ->orWhere('codigo', 'like', '%' . $buscar . '%');
+                        });
                 });
             })
             ->when(in_array($estado, self::ESTADOS, true), function ($query) use ($estado) {
@@ -65,15 +89,16 @@ class EmpleadoCapacitacionController extends Controller
 
     public function create()
     {
-        $empleados = Empleado::where('estado', 1)
+        $empleados = EmpleadoRrhh::where('estado', 1)
             ->orderBy('nombre_completo')
             ->get();
 
         $capacitaciones = Capacitacion::where('estado', 1)
             ->orderBy('capacitacion')
             ->get();
+        $opcionesCapacitaciones = $this->opcionesCapacitaciones($capacitaciones);
 
-        return view('empleado_capacitaciones.create', compact('empleados', 'capacitaciones'));
+        return view('empleado_capacitaciones.create', compact('empleados', 'opcionesCapacitaciones'));
     }
 
     public function store(Request $request, AvisoCorreoService $avisoCorreoService)
@@ -81,7 +106,12 @@ class EmpleadoCapacitacionController extends Controller
         $data = $request->validate([
             'id_capacitacion' => ['required', 'exists:capacitacion,id_capacitacion'],
             'id_empleados' => ['required', 'array', 'min:1'],
-            'id_empleados.*' => ['integer', 'distinct', 'exists:empleado,id_empleado'],
+            'id_empleados.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('rrhh.empleado', 'id_empleado')
+                    ->where(fn ($query) => $query->where('estado', 1)),
+            ],
             'obligatoria' => ['required', Rule::in(['0', '1'])],
             'fecha_asignacion' => ['required', 'date'],
             'fecha_limite' => ['required', 'date', 'after_or_equal:fecha_asignacion'],
@@ -184,7 +214,7 @@ class EmpleadoCapacitacionController extends Controller
     {
         $asignacion = EmpleadoCapacitacion::with(['modulosAvance', 'intentosEvaluacion'])->findOrFail($id);
 
-        $empleados = Empleado::where(function ($query) use ($asignacion) {
+        $empleados = EmpleadoRrhh::where(function ($query) use ($asignacion) {
                 $query->where('estado', 1)
                     ->orWhere('id_empleado', $asignacion->id_empleado);
             })
@@ -214,7 +244,10 @@ class EmpleadoCapacitacionController extends Controller
         $tieneSeguimiento = $this->tieneSeguimiento($asignacion);
 
         $data = $request->validate([
-            'id_empleado' => ['required', 'exists:empleado,id_empleado'],
+            'id_empleado' => [
+                'required',
+                Rule::exists('rrhh.empleado', 'id_empleado'),
+            ],
             'id_capacitacion' => ['required', 'exists:capacitacion,id_capacitacion'],
             'obligatoria' => ['required', Rule::in(['0', '1'])],
             'fecha_asignacion' => ['required', 'date'],

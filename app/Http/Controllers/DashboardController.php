@@ -24,7 +24,7 @@ class DashboardController extends Controller
         $esAdminDashboard = $usuario?->esAdminSistema() === true;
         $esInstructorDashboard = $usuario?->esInstructorSistema() === true && !$esAdminDashboard;
         $instructorActualDashboard = $esInstructorDashboard && $usuario
-            ? $usuario->instructorInternoActual()
+            ? $usuario->instructorRrhhActual()
             : null;
 
         if (!$esAdminDashboard && !$esInstructorDashboard) {
