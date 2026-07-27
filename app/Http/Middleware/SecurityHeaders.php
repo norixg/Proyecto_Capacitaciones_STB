@@ -19,16 +19,31 @@ class SecurityHeaders
 
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'DENY');
+        $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+
+        $scriptSrc = "'self' 'nonce-{$nonce}' https://cdn.jsdelivr.net";
+
+        // Vite puede necesitar eval durante el desarrollo, pero nunca en producción.
+        if (! app()->isProduction()) {
+            $scriptSrc .= " 'unsafe-eval'";
+        }
+
         $response->headers->set(
             'Content-Security-Policy',
             "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; "
-            . "script-src 'self' 'nonce-{$nonce}' 'unsafe-eval' https://cdn.jsdelivr.net; "
+            . "script-src {$scriptSrc}; "
             . "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.bunny.net; "
             . "font-src 'self' https://fonts.bunny.net data:; img-src 'self' data: blob: https:; "
             . "media-src 'self' blob: https:; frame-src https:; connect-src 'self'; upgrade-insecure-requests"
         );
+
+        if ($request->user()) {
+            $response->headers->set('Cache-Control', 'no-store, private');
+            $response->headers->set('Pragma', 'no-cache');
+        }
 
         if ($request->isSecure() && app()->isProduction()) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
