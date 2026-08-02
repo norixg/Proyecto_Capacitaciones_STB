@@ -26,10 +26,12 @@ class SecurityHeaders
 
         $scriptSrc = "'self' 'nonce-{$nonce}' https://cdn.jsdelivr.net";
 
-        // Vite puede necesitar eval durante el desarrollo, pero nunca en producción.
-        if (! app()->isProduction()) {
-            $scriptSrc .= " 'unsafe-eval'";
-        }
+        // Alpine.js evalúa sus expresiones (x-show, @click, @click.away, etc.)
+        // usando new Function()/eval, por lo que necesita 'unsafe-eval' también
+        // en producción. Sin esto, Alpine no puede controlar la visibilidad de
+        // los menús y quedan siempre abiertos. Si en el futuro se migra a la
+        // build CSP-safe de Alpine (@alpinejs/csp), esto se puede quitar.
+        $scriptSrc .= " 'unsafe-eval'";
 
         $response->headers->set(
             'Content-Security-Policy',
