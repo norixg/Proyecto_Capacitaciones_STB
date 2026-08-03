@@ -86,7 +86,7 @@
 
                         <div class="flex flex-wrap gap-2 md:justify-end">
                             <button type="button"
-                                    onclick="abrirModal('modalCrearEjercicio')"
+                                    @click="abrirModal('modalCrearEjercicio')"
                                     class="esf-btn esf-btn-primary">
                                 Crear ejercicio
                             </button>
@@ -248,7 +248,7 @@
                             </button>
 
                             <button type="button"
-                                    onclick="cerrarModal('modalCrearEjercicio')"
+                                    @click="cerrarModal('modalCrearEjercicio')"
                                     class="esf-btn esf-btn-soft">
                                 Cancelar
                             </button>
@@ -326,14 +326,14 @@
 
                                     <div class="esf-learning-inline-actions">
                                         <button type="button"
-                                                onclick="abrirModal('modalEditarEjercicio{{ $ejercicio->id_ejercicio }}')"
+                                                @click="abrirModal('modalEditarEjercicio{{ $ejercicio->id_ejercicio }}')"
                                                 class="esf-action-btn esf-action-edit justify-center text-center">
                                             Editar ejercicio
                                         </button>
 
                                         <form method="POST"
                                             action="{{ route('ejercicios.destroy', $ejercicio->id_ejercicio) }}"
-                                            onsubmit="return confirm('¿Eliminar este ejercicio?');">
+                                            @submit="if (!confirm('¿Eliminar este ejercicio?')) $event.preventDefault()">
                                             @csrf
                                             @method('DELETE')
 
@@ -362,7 +362,7 @@
                                     </div>
 
                                     <button type="button"
-                                            onclick="abrirModal('modalCrearPreguntaEjercicio{{ $ejercicio->id_ejercicio }}')"
+                                            @click="abrirModal('modalCrearPreguntaEjercicio{{ $ejercicio->id_ejercicio }}')"
                                             class="esf-btn esf-btn-primary">
                                         + Pregunta
                                     </button>
@@ -416,14 +416,14 @@
 
                                                 <div class="esf-question-actions">
                                                     <button type="button"
-                                                            onclick="abrirModal('modalEditarPreguntaEjercicio{{ $pregunta->id_ejercicio_pregunta }}')"
+                                                            @click="abrirModal('modalEditarPreguntaEjercicio{{ $pregunta->id_ejercicio_pregunta }}')"
                                                             class="esf-action-btn esf-action-edit">
                                                         Editar pregunta
                                                     </button>
 
                                                     <form method="POST"
                                                         action="{{ route('ejercicio_preguntas.destroy', $pregunta->id_ejercicio_pregunta) }}"
-                                                        onsubmit="return confirm('¿Eliminar esta pregunta de ejercicio?');">
+                                                        @submit="if (!confirm('¿Eliminar esta pregunta de ejercicio?')) $event.preventDefault()">
                                                         @csrf
                                                         @method('DELETE')
 
@@ -467,7 +467,7 @@
 
                                                                 <form method="POST"
                                                                     action="{{ route('ejercicio_opciones.destroy', $opcion->id_ejercicio_opcion) }}"
-                                                                    onsubmit="return confirm('¿Eliminar esta opción?');">
+                                                                    @submit="if (!confirm('¿Eliminar esta opción?')) $event.preventDefault()">
                                                                     @csrf
                                                                     @method('DELETE')
 
@@ -638,7 +638,7 @@
                                     </button>
 
                                     <button type="button"
-                                            onclick="cerrarModal('modalEditarEjercicio{{ $ejercicio->id_ejercicio }}')"
+                                            @click="cerrarModal('modalEditarEjercicio{{ $ejercicio->id_ejercicio }}')"
                                             class="esf-btn esf-btn-soft">
                                         Cancelar
                                     </button>
@@ -955,7 +955,7 @@
 
                     <div class="esf-admin-actions-footer esf-admin-modal-full">
                         <button type="button"
-                                onclick="cerrarModal('modalCrearPreguntaEjercicio{{ $ejercicio->id_ejercicio }}')"
+                                @click="cerrarModal('modalCrearPreguntaEjercicio{{ $ejercicio->id_ejercicio }}')"
                                 class="esf-btn esf-btn-soft">
                             Cancelar
                         </button>
@@ -1395,7 +1395,7 @@
 
                         <div class="esf-admin-actions-footer">
                             <button type="button"
-                                    onclick="cerrarModal('modalEditarPreguntaEjercicio{{ $pregunta->id_ejercicio_pregunta }}')"
+                                    @click="cerrarModal('modalEditarPreguntaEjercicio{{ $pregunta->id_ejercicio_pregunta }}')"
                                     class="esf-btn esf-btn-soft">
                                 Cancelar
                             </button>

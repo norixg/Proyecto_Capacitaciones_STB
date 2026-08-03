@@ -302,7 +302,7 @@
                             <div class="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    onclick="
+                                    @click="
                                         const html = document.documentElement;
                                         const modoOscuroActivo = html.classList.toggle('dark');
                                         localStorage.setItem('tema-sistema-capacitacion', modoOscuroActivo ? 'oscuro' : 'claro');
@@ -447,6 +447,14 @@
                                 <span class="esf-sidebar-icon">IN</span>
                                 <span>Inicio</span>
                             </a>
+
+                            @if(auth()->user()->empleadoUser)
+                                <a href="{{ route('mis_capacitaciones.index') }}"
+                                class="esf-sidebar-link {{ request()->routeIs('mis_capacitaciones.*', 'mis_calificaciones.*', 'mis_modulos.*', 'mis_ejercicios.*', 'mis_evaluaciones.*') ? 'esf-sidebar-link-active' : '' }}">
+                                    <span class="esf-sidebar-icon">MC</span>
+                                    <span>Mis capacitaciones</span>
+                                </a>
+                            @endif
                         </div>
 
                         <div>
@@ -583,7 +591,7 @@
                             <div class="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    onclick="
+                                    @click="
                                         const html = document.documentElement;
                                         const modoOscuroActivo = html.classList.toggle('dark');
                                         localStorage.setItem('tema-sistema-capacitacion', modoOscuroActivo ? 'oscuro' : 'claro');

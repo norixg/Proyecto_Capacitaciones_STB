@@ -185,6 +185,8 @@ Route::middleware(['auth', 'active', 'password.changed'])->group(function () {
             Route::get('/asignaciones-capacitacion', [EmpleadoCapacitacionController::class, 'index'])->name('empleado_capacitaciones.index');
             Route::get('/asignaciones-capacitacion/crear', [EmpleadoCapacitacionController::class, 'create'])->name('empleado_capacitaciones.create');
             Route::post('/asignaciones-capacitacion', [EmpleadoCapacitacionController::class, 'store'])->name('empleado_capacitaciones.store');
+            Route::get('/asignaciones-capacitacion/por-puesto', [EmpleadoCapacitacionController::class, 'porPuesto'])->name('empleado_capacitaciones.por_puesto');
+            Route::post('/asignaciones-capacitacion/por-puesto', [EmpleadoCapacitacionController::class, 'storePorPuesto'])->name('empleado_capacitaciones.por_puesto.store');
             Route::get('/asignaciones-capacitacion/{id}/editar', [EmpleadoCapacitacionController::class, 'edit'])->name('empleado_capacitaciones.edit');
             Route::put('/asignaciones-capacitacion/{id}', [EmpleadoCapacitacionController::class, 'update'])->name('empleado_capacitaciones.update');
             Route::delete('/asignaciones-capacitacion/{id}', [EmpleadoCapacitacionController::class, 'destroy'])->name('empleado_capacitaciones.destroy');

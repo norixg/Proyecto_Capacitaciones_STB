@@ -148,7 +148,7 @@
                 method="POST"
                 target="{{ request()->boolean('integrado_modulo') ? '_top' : '_self' }}"
                 action="{{ route('mis_evaluaciones.submit', [$miCapacitacion->id_empleado_capacitacion, $evaluacion->id_evaluacion]) }}"
-                onsubmit="return confirm('¿Estás segura/o de finalizar y enviar esta evaluación? Las preguntas en blanco se guardarán con puntaje 0.');">
+                @submit="if (!confirm('¿Estás segura/o de finalizar y enviar esta evaluación? Las preguntas en blanco se guardarán con puntaje 0.')) $event.preventDefault()">
                     @csrf
 
                     @if(!is_null($segundosRestantes))

@@ -61,7 +61,7 @@
                                 </div>
 
                                 <button type="button"
-                                        onclick="agregarSeccionModulo('contenedorSeccionesModulo')"
+                                        @click="agregarSeccionModulo('contenedorSeccionesModulo')"
                                         class="px-3 py-2 bg-blue-600 text-white rounded text-sm">
                                     + Agregar página
                                 </button>
@@ -78,13 +78,13 @@
 
                                         <div class="flex flex-wrap gap-2 justify-end">
                                             <button type="button"
-                                                    onclick="agregarSubseccionModuloCrear(this)"
+                                                    @click="agregarSubseccionModuloCrear($el)"
                                                     class="px-2 py-1 bg-emerald-600 text-white rounded text-xs boton-agregar-subseccion">
                                                 + Subsección
                                             </button>
 
                                             <button type="button"
-                                                    onclick="eliminarSeccionModulo(this)"
+                                                    @click="eliminarSeccionModulo($el)"
                                                     class="px-2 py-1 bg-red-600 text-white rounded text-xs">
                                                 Quitar
                                             </button>
@@ -105,7 +105,7 @@
                                     </label>
 
                                     <select name="secciones_nivel[]"
-                                            onchange="actualizarSelectorNivelSeccionCrear(this)"
+                                            @change="actualizarSelectorNivelSeccionCrear($el)"
                                             class="w-full border rounded px-3 py-2 text-black mb-3">
                                         <option value="1" selected>Sección principal</option>
                                         <option value="2">Subsección</option>
@@ -1271,13 +1271,13 @@
 
                         <div class="flex flex-wrap gap-2 justify-end">
                             <button type="button"
-                                    onclick="agregarSubseccionModuloCrear(this)"
+                                    @click="agregarSubseccionModuloCrear($el)"
                                     class="px-2 py-1 bg-emerald-600 text-white rounded text-xs boton-agregar-subseccion">
                                 + Subsección
                             </button>
 
                             <button type="button"
-                                    onclick="eliminarSeccionModulo(this)"
+                                    @click="eliminarSeccionModulo($el)"
                                     class="px-2 py-1 bg-red-600 text-white rounded text-xs">
                                 Quitar
                             </button>
@@ -1298,7 +1298,7 @@
                     </label>
 
                     <select name="secciones_nivel[]"
-                            onchange="actualizarSelectorNivelSeccionCrear(this)"
+                            @change="actualizarSelectorNivelSeccionCrear($el)"
                             class="w-full border rounded px-3 py-2 text-black mb-3">
                         <option value="1" selected>Sección principal</option>
                         <option value="2">Subsección</option>
@@ -1348,13 +1348,13 @@
 
                         <div class="flex flex-wrap gap-2 justify-end">
                             <button type="button"
-                                    onclick="agregarSubseccionModuloCrear(this)"
+                                    @click="agregarSubseccionModuloCrear($el)"
                                     class="px-2 py-1 bg-emerald-600 text-white rounded text-xs boton-agregar-subseccion hidden">
                                 + Subsección
                             </button>
 
                             <button type="button"
-                                    onclick="eliminarSeccionModulo(this)"
+                                    @click="eliminarSeccionModulo($el)"
                                     class="px-2 py-1 bg-red-600 text-white rounded text-xs">
                                 Quitar
                             </button>
@@ -1375,7 +1375,7 @@
                     </label>
 
                     <select name="secciones_nivel[]"
-                            onchange="actualizarSelectorNivelSeccionCrear(this)"
+                            @change="actualizarSelectorNivelSeccionCrear($el)"
                             class="w-full border rounded px-3 py-2 text-black mb-3">
                         <option value="1">Sección principal</option>
                         <option value="2" selected>Subsección</option>

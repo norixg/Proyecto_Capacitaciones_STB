@@ -26,6 +26,15 @@ class EmpleadoUser extends Model
         'fecha_asignacion' => 'datetime',
     ];
 
+    // empleado_user vive en la base de datos local. Cuando esta relación se
+    // recorre desde un modelo en otra conexión (p. ej. EmpleadoRrhh, en 'rrhh'),
+    // Eloquent le propaga esa conexión por no tener una propia declarada aquí.
+    // Fijarla explícitamente evita que la consulta se dispare contra la BD equivocada.
+    public function getConnectionName()
+    {
+        return config('database.default');
+    }
+
     public function empleado()
     {
         return $this->belongsTo(EmpleadoRrhh::class, 'id_empleado', 'id_empleado');

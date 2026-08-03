@@ -80,7 +80,7 @@
 
                                             <form method="POST"
                                                 action="{{ route('capacitacion_modulos.destroy', $modulo->id_capacitacion_modulo) }}"
-                                                onsubmit="return confirm('¿Eliminar este módulo y todo su contenido interno? Esta acción no se puede deshacer.');">
+                                                @submit="if (!confirm('¿Eliminar este módulo y todo su contenido interno? Esta acción no se puede deshacer.')) $event.preventDefault()">
                                                 @csrf
                                                 @method('DELETE')
 
@@ -95,7 +95,7 @@
                                                 @method('PATCH')
 
                                                 <button type="submit"
-                                                        onclick="return confirm('¿Seguro que deseas {{ (int) $modulo->estado === 1 ? 'inactivar' : 'activar' }} este módulo?')"
+                                                        @click="if (!confirm('¿Seguro que deseas {{ (int) $modulo->estado === 1 ? 'inactivar' : 'activar' }} este módulo?')) $event.preventDefault()"
                                                         class="px-3 py-1 {{ (int) $modulo->estado === 1 ? 'bg-red-600' : 'bg-green-600' }} text-white rounded">
                                                     {{ (int) $modulo->estado === 1 ? 'Inactivar' : 'Activar' }}
                                                 </button>

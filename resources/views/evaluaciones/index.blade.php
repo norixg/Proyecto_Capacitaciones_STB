@@ -82,7 +82,7 @@
                                class="min-w-[220px] rounded-full border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition focus:border-blue-300 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
 
                         <button type="button"
-                                onclick="abrirModal('modalCrearEvaluacion')"
+                                @click="abrirModal('modalCrearEvaluacion')"
                                 class="esf-btn esf-btn-primary">
                             Crear evaluación
                         </button>
@@ -367,7 +367,7 @@
                             </button>
 
                             <button type="button"
-                                    onclick="cerrarModal('modalCrearEvaluacion')"
+                                    @click="cerrarModal('modalCrearEvaluacion')"
                                     class="modal-evaluacion-btn-soft">
                                 Cancelar
                             </button>
@@ -450,14 +450,14 @@
 
                                     <div class="esf-learning-inline-actions">
                                         <button type="button"
-                                                onclick="abrirModal('modalEditarEvaluacion{{ $evaluacion->id_evaluacion }}')"
+                                                @click="abrirModal('modalEditarEvaluacion{{ $evaluacion->id_evaluacion }}')"
                                                 class="esf-action-btn esf-action-edit justify-center text-center">
                                             Editar evaluación
                                         </button>
 
                                         <form method="POST"
                                             action="{{ route('evaluaciones.destroy', $evaluacion->id_evaluacion) }}"
-                                            onsubmit="return confirm('¿Eliminar esta evaluación?');">
+                                            @submit="if (!confirm('¿Eliminar esta evaluación?')) $event.preventDefault()">
                                             @csrf
                                             @method('DELETE')
 
@@ -486,7 +486,7 @@
                                     </div>
 
                                     <button type="button"
-                                            onclick="abrirModal('modalCrearPreguntaEvaluacion{{ $evaluacion->id_evaluacion }}')"
+                                            @click="abrirModal('modalCrearPreguntaEvaluacion{{ $evaluacion->id_evaluacion }}')"
                                             class="esf-btn esf-btn-primary">
                                         + Pregunta
                                     </button>
@@ -534,14 +534,14 @@
 
                                                 <div class="esf-question-actions">
                                                     <button type="button"
-                                                            onclick="abrirModal('modalEditarPreguntaEvaluacion{{ $pregunta->id_evaluacion_pregunta }}')"
+                                                            @click="abrirModal('modalEditarPreguntaEvaluacion{{ $pregunta->id_evaluacion_pregunta }}')"
                                                             class="esf-action-btn esf-action-edit">
                                                         Editar pregunta
                                                     </button>
 
                                                     <form method="POST"
                                                         action="{{ route('evaluacion_preguntas.destroy', $pregunta->id_evaluacion_pregunta) }}"
-                                                        onsubmit="return confirm('¿Eliminar esta pregunta de evaluación?');">
+                                                        @submit="if (!confirm('¿Eliminar esta pregunta de evaluación?')) $event.preventDefault()">
                                                         @csrf
                                                         @method('DELETE')
 
@@ -584,7 +584,7 @@
 
                                                                 <form method="POST"
                                                                     action="{{ route('evaluacion_opciones.destroy', $opcion->id_evaluacion_opcion) }}"
-                                                                    onsubmit="return confirm('¿Eliminar esta opción?');">
+                                                                    @submit="if (!confirm('¿Eliminar esta opción?')) $event.preventDefault()">
                                                                     @csrf
                                                                     @method('DELETE')
 
@@ -749,7 +749,7 @@
                                     </button>
 
                                     <button type="button"
-                                            onclick="cerrarModal('modalEditarEvaluacion{{ $evaluacion->id_evaluacion }}')"
+                                            @click="cerrarModal('modalEditarEvaluacion{{ $evaluacion->id_evaluacion }}')"
                                             class="esf-btn esf-btn-soft">
                                         Cancelar
                                     </button>
@@ -1055,7 +1055,7 @@
 
                 <div class="esf-admin-actions-footer">
                     <button type="button"
-                            onclick="cerrarModal('modalCrearPreguntaEvaluacion{{ $evaluacion->id_evaluacion }}')"
+                            @click="cerrarModal('modalCrearPreguntaEvaluacion{{ $evaluacion->id_evaluacion }}')"
                             class="esf-btn esf-btn-soft">
                         Cancelar
                     </button>
@@ -1458,7 +1458,7 @@
 
                     <div class="esf-admin-actions-footer">
                         <button type="button"
-                                onclick="cerrarModal('modalEditarPreguntaEvaluacion{{ $pregunta->id_evaluacion_pregunta }}')"
+                                @click="cerrarModal('modalEditarPreguntaEvaluacion{{ $pregunta->id_evaluacion_pregunta }}')"
                                 class="esf-btn esf-btn-soft">
                             Cancelar
                         </button>

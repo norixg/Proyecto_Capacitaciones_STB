@@ -176,7 +176,7 @@
                                                 @if(!$esMismoUsuario && $usuario->estado == 1)
                                                     <form action="{{ route('usuarios.generar_password_temporal', $usuario->id) }}"
                                                           method="POST"
-                                                          onsubmit="return confirm('Se invalidará inmediatamente la contraseña actual y se enviará una nueva contraseña temporal por correo. ¿Deseas continuar?');">
+                                                          @submit="if (!confirm('Se invalidará inmediatamente la contraseña actual y se enviará una nueva contraseña temporal por correo. ¿Deseas continuar?')) $event.preventDefault()">
                                                         @csrf
 
                                                         <button type="submit" class="esf-action-btn esf-action-edit">
@@ -189,7 +189,7 @@
 
                                                     <form action="{{ route('usuarios.toggleEstado', $usuario->id) }}"
                                                           method="POST"
-                                                          onsubmit="return confirm('¿Seguro que quieres cambiar el estado de este usuario?');">
+                                                          @submit="if (!confirm('¿Seguro que quieres cambiar el estado de este usuario?')) $event.preventDefault()">
                                                         @csrf
                                                         @method('PATCH')
 
@@ -201,7 +201,7 @@
 
                                                     <form action="{{ route('usuarios.destroy', $usuario->id) }}"
                                                           method="POST"
-                                                          onsubmit="return confirm('¿Seguro que quieres eliminar este usuario? Esta acción solo debe usarse si fue creado por error y no tiene movimientos en el sistema.');">
+                                                          @submit="if (!confirm('¿Seguro que quieres eliminar este usuario? Esta acción solo debe usarse si fue creado por error y no tiene movimientos en el sistema.')) $event.preventDefault()">
                                                         @csrf
                                                         @method('DELETE')
 

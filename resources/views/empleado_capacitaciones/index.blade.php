@@ -58,6 +58,11 @@
                                 </p>
                             </div>
 
+                            <a href="{{ route('empleado_capacitaciones.por_puesto') }}"
+                               class="esf-btn esf-btn-soft">
+                                Asignar por puesto
+                            </a>
+
                             <a href="{{ route('empleado_capacitaciones.create') }}"
                                class="esf-btn esf-btn-primary">
                                 + Nueva asignación
@@ -255,7 +260,7 @@
                                                     @method('DELETE')
 
                                                     <button type="submit"
-                                                            onclick="return confirm('¿Seguro que deseas eliminar esta asignación? También se eliminará TODO su seguimiento, avances, intentos, respuestas, historial y avisos. Esta acción no se puede deshacer.')"
+                                                            @click="if (!confirm('¿Seguro que deseas eliminar esta asignación? También se eliminará TODO su seguimiento, avances, intentos, respuestas, historial y avisos. Esta acción no se puede deshacer.')) $event.preventDefault()"
                                                             class="esf-action-btn esf-action-delete">
                                                         Eliminar
                                                     </button>

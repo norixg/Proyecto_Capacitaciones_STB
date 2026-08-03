@@ -482,7 +482,7 @@
 
         <button
             type="button"
-            onclick="
+            @click="
                 const html = document.documentElement;
                 const modoOscuroActivo = html.classList.toggle('dark');
                 localStorage.setItem('tema-sistema-capacitacion', modoOscuroActivo ? 'oscuro' : 'claro');

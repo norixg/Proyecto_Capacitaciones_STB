@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Capacitacion;
 use App\Models\EmpleadoRrhh;
 use App\Models\EmpleadoCapacitacion;
+use App\Models\PuestosCapacitacionRrhh;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use App\Services\AsignacionPorPuestoRrhhService;
 use App\Services\AvisoCorreoService;
 use App\Services\EliminacionCapacitacionService;
 use Illuminate\Support\Str;
@@ -36,6 +39,23 @@ class EmpleadoCapacitacionController extends Controller
 
             return [
                 'id' => $capacitacion->id_capacitacion,
+                'etiqueta' => $etiqueta,
+                'busqueda' => Str::of($etiqueta)->ascii()->lower()->toString(),
+            ];
+        })->values();
+    }
+
+    private function opcionesPuestos($puestos)
+    {
+        return collect($puestos)->map(function ($puesto) {
+            $etiqueta = $puesto->puesto_trabajo_matriz;
+
+            if ($puesto->departamento) {
+                $etiqueta .= ' — '.$puesto->departamento;
+            }
+
+            return [
+                'id' => $puesto->id_puesto_trabajo_matriz,
                 'etiqueta' => $etiqueta,
                 'busqueda' => Str::of($etiqueta)->ascii()->lower()->toString(),
             ];
@@ -208,6 +228,89 @@ class EmpleadoCapacitacionController extends Controller
 
         return redirect()->route('empleado_capacitaciones.index')
             ->with('success', $mensaje);
+    }
+
+    public function porPuesto(Request $request, AsignacionPorPuestoRrhhService $servicio)
+    {
+        $puestos = $this->puestosConMatriz();
+        $opcionesPuestos = $this->opcionesPuestos($puestos);
+
+        $idPuesto = (int) $request->query('id_puesto_trabajo_matriz', 0);
+
+        $vistaPrevia = $idPuesto > 0 ? $servicio->previsualizar($idPuesto) : null;
+
+        if ($vistaPrevia && !$vistaPrevia['puesto']) {
+            $vistaPrevia = null;
+        }
+
+        return view('empleado_capacitaciones.por_puesto', compact('opcionesPuestos', 'idPuesto', 'vistaPrevia'));
+    }
+
+    public function storePorPuesto(Request $request, AsignacionPorPuestoRrhhService $servicio, AvisoCorreoService $avisoCorreoService)
+    {
+        $data = $request->validate([
+            'id_puesto_trabajo_matriz' => ['required', 'integer', 'min:1'],
+            'fecha_asignacion' => ['required', 'date'],
+            'fecha_limite' => ['required', 'date', 'after_or_equal:fecha_asignacion'],
+            'fecha_vencimiento' => ['required', 'date', 'after_or_equal:fecha_asignacion'],
+            'id_empleados' => ['required', 'array', 'min:1'],
+            'id_empleados.*' => ['integer'],
+            'id_capacitaciones' => ['required', 'array', 'min:1'],
+            'id_capacitaciones.*' => ['integer'],
+        ], [
+            'id_empleados.required' => 'Debes seleccionar al menos un empleado.',
+            'id_capacitaciones.required' => 'Debes seleccionar al menos una capacitación.',
+            'fecha_limite.after_or_equal' => 'La fecha límite no puede ser menor que la fecha de asignación.',
+            'fecha_vencimiento.after_or_equal' => 'La fecha de vencimiento no puede ser menor que la fecha de asignación.',
+        ]);
+
+        if ($data['fecha_vencimiento'] < $data['fecha_limite']) {
+            return back()->withErrors([
+                'fecha_vencimiento' => 'La fecha de vencimiento no puede ser menor que la fecha límite.',
+            ])->withInput();
+        }
+
+        $resultado = $servicio->asignar(
+            (int) $data['id_puesto_trabajo_matriz'],
+            $data['id_empleados'],
+            $data['id_capacitaciones'],
+            [
+                'fecha_asignacion' => $data['fecha_asignacion'],
+                'fecha_limite' => $data['fecha_limite'],
+                'fecha_vencimiento' => $data['fecha_vencimiento'],
+            ],
+            Auth::id(),
+            $avisoCorreoService
+        );
+
+        $mensaje = "Se crearon {$resultado['creadas']} asignaciones correctamente.";
+
+        if ($resultado['omitidas_ya_existian'] > 0) {
+            $mensaje .= " {$resultado['omitidas_ya_existian']} ya existían y se omitieron.";
+        }
+
+        if ($resultado['omitidas_sin_usuario'] > 0) {
+            $mensaje .= " {$resultado['omitidas_sin_usuario']} se omitieron por no tener usuario en el sistema.";
+        }
+
+        if ($resultado['omitidas_capacitacion_invalida'] > 0) {
+            $mensaje .= " {$resultado['omitidas_capacitacion_invalida']} se omitieron por capacitación inválida.";
+        }
+
+        return redirect()->route('empleado_capacitaciones.index')->with('success', $mensaje);
+    }
+
+    private function puestosConMatriz()
+    {
+        $idsPuestos = PuestosCapacitacionRrhh::query()
+            ->distinct()
+            ->pluck('id_puesto_trabajo_matriz');
+
+        return DB::connection('rrhh')->table('puesto_trabajo_matriz as p')
+            ->leftJoin('departamento as d', 'd.id_departamento', '=', 'p.id_departamento')
+            ->whereIn('p.id_puesto_trabajo_matriz', $idsPuestos)
+            ->orderBy('p.puesto_trabajo_matriz')
+            ->get(['p.id_puesto_trabajo_matriz', 'p.puesto_trabajo_matriz', 'd.departamento']);
     }
 
     public function edit($id)

@@ -186,6 +186,10 @@ class ResumenCapacitacionEmpleadoService
                 'id_user' => Auth::check() ? Auth::id() : null,
             ]);
         }
+
+        if ($estadoAnterior !== $estadoNuevo && $estadoNuevo === 'aprobada') {
+            app(SincronizarAsistenciaRrhhService::class)->registrarAprobacion($miCapacitacion);
+        }
     }
 
     private function resolverResumenModulo($modulo, $avance, $intentosEvaluacionModulo, $intentosEjercicioModulo): array

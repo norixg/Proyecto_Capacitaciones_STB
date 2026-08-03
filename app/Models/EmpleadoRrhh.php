@@ -17,4 +17,14 @@ class EmpleadoRrhh extends Model
         'id_empleado' => 'integer',
         'estado' => 'integer',
     ];
+
+    public function empleadoUser()
+    {
+        return $this->hasOne(EmpleadoUser::class, 'id_empleado', 'id_empleado');
+    }
+
+    public function puestoTrabajo()
+    {
+        return $this->belongsTo(PuestoTrabajoMatrizRrhh::class, 'id_puesto_trabajo_matriz', 'id_puesto_trabajo_matriz');
+    }
 }

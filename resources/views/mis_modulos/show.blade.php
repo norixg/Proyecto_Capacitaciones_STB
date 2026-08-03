@@ -504,11 +504,11 @@
                                                 src="{{ route('mis_ejercicios.show', [$miCapacitacion->id_empleado_capacitacion, $ejercicioIntegradoActivoId]) }}?integrado_modulo=1"
                                                 class="esf-module-embedded-frame-full"
                                                 scrolling="yes"
-                                                onload="
+                                                @load="
                                                     if (window.matchMedia('(max-width: 767px)').matches) {
-                                                        this.style.height = 'calc(100dvh - 5.25rem)';
+                                                        $el.style.height = 'calc(100dvh - 5.25rem)';
                                                     } else {
-                                                        this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 40) + 'px';
+                                                        $el.style.height = ($el.contentWindow.document.documentElement.scrollHeight + 40) + 'px';
                                                     }
                                                 ">
                                             </iframe>
@@ -517,11 +517,11 @@
                                                 src="{{ route('mis_ejercicios.resultado', [$miCapacitacion->id_empleado_capacitacion, $resultadoEjercicioIntegradoActivoId]) }}?integrado_modulo=1"
                                                 class="esf-module-embedded-frame-full"
                                                 scrolling="yes"
-                                                onload="
+                                                @load="
                                                     if (window.matchMedia('(max-width: 767px)').matches) {
-                                                        this.style.height = 'calc(100dvh - 5.25rem)';
+                                                        $el.style.height = 'calc(100dvh - 5.25rem)';
                                                     } else {
-                                                        this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 40) + 'px';
+                                                        $el.style.height = ($el.contentWindow.document.documentElement.scrollHeight + 40) + 'px';
                                                     }
                                                 ">
                                             </iframe>
@@ -530,11 +530,11 @@
                                                 src="{{ route('mis_evaluaciones.show', [$miCapacitacion->id_empleado_capacitacion, $evaluacionIntegradaActivaId]) }}?integrado_modulo=1"
                                                 class="esf-module-embedded-frame-full"
                                                 scrolling="yes"
-                                                onload="
+                                                @load="
                                                     if (window.matchMedia('(max-width: 767px)').matches) {
-                                                        this.style.height = 'calc(100dvh - 5.25rem)';
+                                                        $el.style.height = 'calc(100dvh - 5.25rem)';
                                                     } else {
-                                                        this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 40) + 'px';
+                                                        $el.style.height = ($el.contentWindow.document.documentElement.scrollHeight + 40) + 'px';
                                                     }
                                                 ">
                                             </iframe>
@@ -543,11 +543,11 @@
                                                 src="{{ route('mis_evaluaciones.resultado', [$miCapacitacion->id_empleado_capacitacion, $resultadoEvaluacionIntegradaActivaId]) }}?integrado_modulo=1"
                                                 class="esf-module-embedded-frame-full"
                                                 scrolling="yes"
-                                                onload="
+                                                @load="
                                                     if (window.matchMedia('(max-width: 767px)').matches) {
-                                                        this.style.height = 'calc(100dvh - 5.25rem)';
+                                                        $el.style.height = 'calc(100dvh - 5.25rem)';
                                                     } else {
-                                                        this.style.height = (this.contentWindow.document.documentElement.scrollHeight + 40) + 'px';
+                                                        $el.style.height = ($el.contentWindow.document.documentElement.scrollHeight + 40) + 'px';
                                                     }
                                                 ">
                                             </iframe>

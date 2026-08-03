@@ -87,7 +87,7 @@
                                                 @method('DELETE')
 
                                                 <button type="submit"
-                                                        onclick="return confirm('¿Seguro que deseas eliminar esta opción?')"
+                                                        @click="if (!confirm('¿Seguro que deseas eliminar esta opción?')) $event.preventDefault()"
                                                         class="px-3 py-1 bg-red-600 text-white rounded">
                                                     Eliminar
                                                 </button>

@@ -121,19 +121,19 @@
                                    class="esf-form-input md:w-64">
 
                             <button type="button"
-                                    onclick="abrirTodos()"
+                                    @click="abrirTodos()"
                                     class="esf-action-btn esf-action-status">
                                 Abrir todo
                             </button>
 
                             <button type="button"
-                                    onclick="cerrarTodos()"
+                                    @click="cerrarTodos()"
                                     class="esf-action-btn esf-action-status">
                                 Cerrar todo
                             </button>
 
                             <button type="button"
-                                    onclick="abrirModal('modalCrearModulo')"
+                                    @click="abrirModal('modalCrearModulo')"
                                     class="esf-btn esf-btn-primary text-center">
                                 + Nuevo módulo
                             </button>
@@ -228,7 +228,7 @@
 
                                             <form method="POST"
                                                 action="{{ route('capacitacion_modulos.destroy', $modulo->id_capacitacion_modulo) }}"
-                                                onsubmit="return confirm('¿Eliminar este módulo y todo su contenido interno? Esta acción no se puede deshacer.');">
+                                                @submit="if (!confirm('¿Eliminar este módulo y todo su contenido interno? Esta acción no se puede deshacer.')) $event.preventDefault()">
                                                 @csrf
                                                 @method('DELETE')
 
@@ -893,7 +893,7 @@
                         </p>
 
                         <button type="button"
-                                onclick="abrirModal('modalCrearModulo')"
+                                @click="abrirModal('modalCrearModulo')"
                                 class="mt-5 esf-btn esf-btn-primary">
                             Crear primer módulo
                         </button>
@@ -983,7 +983,7 @@
                                 </div>
 
                                 <button type="button"
-                                        onclick="agregarSeccionModulo('contenedorSeccionesNuevoModulo')"
+                                        @click="agregarSeccionModulo('contenedorSeccionesNuevoModulo')"
                                         class="esf-btn esf-btn-primary text-sm">
                                     + Agregar página
                                 </button>
@@ -1000,13 +1000,13 @@
 
                                         <div class="flex flex-wrap gap-2 justify-end">
                                             <button type="button"
-                                                    onclick="agregarSubseccionModuloNuevo(this)"
+                                                    @click="agregarSubseccionModuloNuevo($el)"
                                                     class="px-2 py-1 bg-emerald-600 text-white rounded text-xs boton-agregar-subseccion">
                                                 + Subsección
                                             </button>
 
                                             <button type="button"
-                                                    onclick="eliminarSeccionModulo(this)"
+                                                    @click="eliminarSeccionModulo($el)"
                                                     class="px-2 py-1 bg-red-600 text-white rounded text-xs">
                                                 Quitar
                                             </button>
@@ -1027,7 +1027,7 @@
                                     </label>
 
                                     <select name="secciones_nivel[]"
-                                            onchange="actualizarSelectorNivelSeccionNuevoModulo(this)"
+                                            @change="actualizarSelectorNivelSeccionNuevoModulo($el)"
                                             class="w-full rounded border-gray-300 dark:bg-gray-900 dark:text-gray-100 mb-3">
                                         <option value="1" selected>Sección principal</option>
                                         <option value="2">Subsección</option>
@@ -1148,7 +1148,7 @@
 
                             <div class="flex flex-col sm:flex-row gap-3">
                                 <button type="button"
-                                        onclick="cerrarModal('modalCrearModulo')"
+                                        @click="cerrarModal('modalCrearModulo')"
                                         class="esf-btn esf-btn-soft">
                                     Cancelar
                                 </button>
@@ -1245,7 +1245,7 @@
                 </div>
 
                 <div class="mt-6 flex justify-end gap-2">
-                    <button type="button" onclick="cerrarModal('modalCrearEvaluacion{{ $modulo->id_capacitacion_modulo }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
+                    <button type="button" @click="cerrarModal('modalCrearEvaluacion{{ $modulo->id_capacitacion_modulo }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
                         Cancelar
                     </button>
 
@@ -1350,7 +1350,7 @@
                     </div>
 
                     <div class="mt-6 flex justify-end gap-2">
-                        <button type="button" onclick="cerrarModal('modalCrearPregunta{{ $evaluacion->id_evaluacion }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
+                        <button type="button" @click="cerrarModal('modalCrearPregunta{{ $evaluacion->id_evaluacion }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
                             Cancelar
                         </button>
 
@@ -1392,7 +1392,7 @@
                         </div>
 
                         <div class="mt-6 flex justify-end gap-2">
-                            <button type="button" onclick="cerrarModal('modalCrearOpcion{{ $pregunta->id_evaluacion_pregunta }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
+                            <button type="button" @click="cerrarModal('modalCrearOpcion{{ $pregunta->id_evaluacion_pregunta }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
                                 Cancelar
                             </button>
 
@@ -1481,7 +1481,7 @@
                 </div>
 
                 <div class="mt-6 flex justify-end gap-2">
-                    <button type="button" onclick="cerrarModal('modalCrearEjercicio{{ $modulo->id_capacitacion_modulo }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
+                    <button type="button" @click="cerrarModal('modalCrearEjercicio{{ $modulo->id_capacitacion_modulo }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
                         Cancelar
                     </button>
 
@@ -1568,7 +1568,7 @@
                     </div>
 
                     <div class="mt-6 flex justify-end gap-2">
-                        <button type="button" onclick="cerrarModal('modalEditarEjercicio{{ $ejercicioItem->id_ejercicio }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
+                        <button type="button" @click="cerrarModal('modalEditarEjercicio{{ $ejercicioItem->id_ejercicio }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
                             Cancelar
                         </button>
 
@@ -1784,7 +1784,7 @@
                     </div>
 
                     <div class="mt-6 flex justify-end gap-2">
-                        <button type="button" onclick="cerrarModal('modalCrearPreguntaEjercicio{{ $ejercicioItem->id_ejercicio }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
+                        <button type="button" @click="cerrarModal('modalCrearPreguntaEjercicio{{ $ejercicioItem->id_ejercicio }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
                             Cancelar
                         </button>
 
@@ -2021,7 +2021,7 @@
                         </div>
 
                         <div class="mt-6 flex justify-end gap-2">
-                            <button type="button" onclick="cerrarModal('modalEditarPreguntaEjercicio{{ $preguntaEjercicio->id_ejercicio_pregunta }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
+                            <button type="button" @click="cerrarModal('modalEditarPreguntaEjercicio{{ $preguntaEjercicio->id_ejercicio_pregunta }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
                                 Cancelar
                             </button>
 
@@ -2085,7 +2085,7 @@
                         </div>
 
                         <div class="mt-6 flex justify-end gap-2">
-                            <button type="button" onclick="cerrarModal('modalCrearOpcionEjercicio{{ $preguntaEjercicio->id_ejercicio_pregunta }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
+                            <button type="button" @click="cerrarModal('modalCrearOpcionEjercicio{{ $preguntaEjercicio->id_ejercicio_pregunta }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
                                 Cancelar
                             </button>
 
@@ -2149,7 +2149,7 @@
                             </div>
 
                             <div class="mt-6 flex justify-end gap-2">
-                                <button type="button" onclick="cerrarModal('modalEditarOpcionEjercicio{{ $opcionEjercicio->id_ejercicio_opcion }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
+                                <button type="button" @click="cerrarModal('modalEditarOpcionEjercicio{{ $opcionEjercicio->id_ejercicio_opcion }}')" class="px-4 py-2 bg-gray-500 text-white rounded">
                                     Cancelar
                                 </button>
 
@@ -3518,13 +3518,13 @@ function crearPanelAjusteImagenTeoriaModulo(editor, quill) {
 
                         <div class="flex flex-wrap gap-2 justify-end">
                             <button type="button"
-                                    onclick="agregarSubseccionModuloNuevo(this)"
+                                    @click="agregarSubseccionModuloNuevo($el)"
                                     class="px-2 py-1 bg-emerald-600 text-white rounded text-xs boton-agregar-subseccion">
                                 + Subsección
                             </button>
 
                             <button type="button"
-                                    onclick="eliminarSeccionModulo(this)"
+                                    @click="eliminarSeccionModulo($el)"
                                     class="px-2 py-1 bg-red-600 text-white rounded text-xs">
                                 Quitar
                             </button>
@@ -3545,7 +3545,7 @@ function crearPanelAjusteImagenTeoriaModulo(editor, quill) {
                     </label>
 
                     <select name="secciones_nivel[]"
-                            onchange="actualizarSelectorNivelSeccionNuevoModulo(this)"
+                            @change="actualizarSelectorNivelSeccionNuevoModulo($el)"
                             class="w-full rounded border-gray-300 dark:bg-gray-900 dark:text-gray-100 mb-3">
                         <option value="1" selected>Sección principal</option>
                         <option value="2">Subsección</option>
@@ -3622,13 +3622,13 @@ function crearPanelAjusteImagenTeoriaModulo(editor, quill) {
 
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button type="button"
-                                onclick="agregarSubseccionModuloNuevo(this)"
+                                @click="agregarSubseccionModuloNuevo($el)"
                                 class="px-2 py-1 bg-emerald-600 text-white rounded text-xs boton-agregar-subseccion hidden">
                             + Subsección
                         </button>
 
                         <button type="button"
-                                onclick="eliminarSeccionModulo(this)"
+                                @click="eliminarSeccionModulo($el)"
                                 class="px-2 py-1 bg-red-600 text-white rounded text-xs">
                             Quitar
                         </button>
@@ -3649,7 +3649,7 @@ function crearPanelAjusteImagenTeoriaModulo(editor, quill) {
                 </label>
 
                 <select name="secciones_nivel[]"
-                        onchange="actualizarSelectorNivelSeccionNuevoModulo(this)"
+                        @change="actualizarSelectorNivelSeccionNuevoModulo($el)"
                         class="w-full rounded border-gray-300 dark:bg-gray-900 dark:text-gray-100 mb-3">
                     <option value="1">Sección principal</option>
                     <option value="2" selected>Subsección</option>

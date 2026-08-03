@@ -7,6 +7,8 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Developer
       MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en .env}"
+    ports:
+      - "127.0.0.1:${DB_HOST_PORT:-1434}:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
     healthcheck:
@@ -61,11 +63,11 @@ services:
       DB_HOST: sqlserver
       DB_PORT: 1433
       DB_DATABASE: db_capacitaciones_stb
-      DB_USERNAME: usuario_laravel
+      DB_USERNAME: "${DB_USERNAME:-usuario_laravel}"
       DB_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD en .env}"
       DB_ENCRYPT: "no"
       DB_TRUST_SERVER_CERTIFICATE: "true"
-      RRHH_DB_HOST: "${RRHH_DB_HOST:-host.docker.internal}"
+      RRHH_DB_HOST: host.docker.internal
       RRHH_DB_PORT: "${RRHH_DB_PORT:-1433}"
       RRHH_DB_DATABASE: "${RRHH_DB_DATABASE:-db_rrhh_stb}"
       RRHH_DB_USERNAME: "${RRHH_DB_USERNAME}"
@@ -76,7 +78,7 @@ services:
       CACHE_STORE: file
       QUEUE_CONNECTION: sync
       FILESYSTEM_DISK: local
-      RUN_MIGRATIONS: "true"
+      RUN_MIGRATIONS: "false"
       MAIL_MAILER: "${MAIL_MAILER:-smtp}"
       MAIL_SCHEME: "${MAIL_SCHEME:-smtp}"
       MAIL_HOST: "${MAIL_HOST:-host.docker.internal}"

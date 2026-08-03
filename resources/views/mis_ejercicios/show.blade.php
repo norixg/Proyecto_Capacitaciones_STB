@@ -148,7 +148,7 @@
                 method="POST"
                 target="{{ request()->boolean('integrado_modulo') ? '_top' : '_self' }}"
                 action="{{ route('mis_ejercicios.submit', [$miCapacitacion->id_empleado_capacitacion, $ejercicio->id_ejercicio]) }}"
-                onsubmit="return confirm('¿Estás segura/o de finalizar y enviar este ejercicio? Las respuestas en blanco se guardarán con puntaje 0.');">
+                @submit="if (!confirm('¿Estás segura/o de finalizar y enviar este ejercicio? Las respuestas en blanco se guardarán con puntaje 0.')) $event.preventDefault()">
                     @csrf
 
                     @if(!is_null($segundosRestantes))

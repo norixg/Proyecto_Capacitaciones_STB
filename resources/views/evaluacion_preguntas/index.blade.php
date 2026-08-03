@@ -84,7 +84,7 @@
                                                 @method('PATCH')
 
                                                 <button type="submit"
-                                                        onclick="return confirm('¿Seguro que deseas {{ (int) $pregunta->activa === 1 ? 'inactivar' : 'activar' }} esta pregunta?')"
+                                                        @click="if (!confirm('¿Seguro que deseas {{ (int) $pregunta->activa === 1 ? 'inactivar' : 'activar' }} esta pregunta?')) $event.preventDefault()"
                                                         class="px-3 py-1 {{ (int) $pregunta->activa === 1 ? 'bg-red-600' : 'bg-green-600' }} text-white rounded">
                                                     {{ (int) $pregunta->activa === 1 ? 'Inactivar' : 'Activar' }}
                                                 </button>

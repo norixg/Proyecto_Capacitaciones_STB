@@ -118,7 +118,7 @@
                                 <article class="esf-training-card" data-capacitacion-admin-card>
                                     <a href="{{ $modoArchivadas ? '#' : route('capacitaciones.builder', $capacitacion->id_capacitacion) }}"
                                         class="block"
-                                        @if($modoArchivadas) onclick="return false;" @endif>
+                                        @if($modoArchivadas) @click.prevent @endif>
                                         <div class="esf-training-cover">
                                             @if($capacitacion->ruta_portada)
                                                 <img src="{{ asset('storage/' . $capacitacion->ruta_portada) }}"
@@ -174,7 +174,7 @@
                                                     @method('PATCH')
 
                                                     <button type="submit"
-                                                            onclick="return confirm('¿Restaurar esta capacitación como inactiva? Luego podrás activarla desde el catálogo.');"
+                                                            @click="if (!confirm('¿Restaurar esta capacitación como inactiva? Luego podrás activarla desde el catálogo.')) $event.preventDefault()"
                                                             class="esf-action-btn esf-action-restore">
                                                         Restaurar
                                                     </button>
@@ -186,7 +186,7 @@
                                                     @method('PATCH')
 
                                                     <button type="submit"
-                                                            onclick="return confirm('¿Archivar esta capacitación? Dejará de aparecer en el catálogo activo y tampoco será visible para los usuarios asignados.');"
+                                                            @click="if (!confirm('¿Archivar esta capacitación? Dejará de aparecer en el catálogo activo y tampoco será visible para los usuarios asignados.')) $event.preventDefault()"
                                                             class="esf-action-btn esf-action-delete">
                                                         Archivar
                                                     </button>
@@ -198,7 +198,7 @@
                                                     @method('PATCH')
 
                                                     <button type="submit"
-                                                            onclick="return confirm('¿Seguro que deseas {{ (int) $capacitacion->estado === 1 ? 'inactivar' : 'activar' }} esta capacitación?')"
+                                                            @click="if (!confirm('¿Seguro que deseas {{ (int) $capacitacion->estado === 1 ? 'inactivar' : 'activar' }} esta capacitación?')) $event.preventDefault()"
                                                             class="esf-action-btn {{ (int) $capacitacion->estado === 1 ? 'esf-action-status' : 'esf-action-restore' }}">
                                                         {{ (int) $capacitacion->estado === 1 ? 'Inactivar' : 'Activar' }}
                                                     </button>
